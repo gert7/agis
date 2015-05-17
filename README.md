@@ -3,7 +3,9 @@ Agis
 
 [![Gem Version](https://badge.fury.io/rb/agis.svg)](http://badge.fury.io/rb/agis)
 
-Agis is a Ruby class mixin that provides a rudimentary messagebox-based lock-free actor call mechanism through and for Redis.
+Agis is a Ruby class mixin that provides a rudimentary messagebox-based lock-free actor call mechanism through and for Redis. It allows commands to be pushed to an autonomous message box in Redis associated with the Object. The calls in the box are then crunched with a call to the agis_crunch methods. The locking mechanism ensures that only one actor crunch routine runs at any time, which can then optionally return a value.
+
+However, it is not designed to be an asynchronous job queue like Sidekiq. A single actor should run on a single thread at any time.
 
 - Classes are provided Agis-specific methods with 0, 1, 2 or 3 arguments
 - The method calls & arguments are stored on Redis in a rudimentary 'call stack' implemented with RPUSH/LPOP

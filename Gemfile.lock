@@ -1,0 +1,36 @@
+PATH
+  remote: .
+  specs:
+    Agis (0.1.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    database_cleaner (1.4.1)
+    diff-lcs (1.2.5)
+    mlanett-redis-lock (0.2.6)
+      redis
+    redis (3.2.1)
+    rspec (3.2.0)
+      rspec-core (~> 3.2.0)
+      rspec-expectations (~> 3.2.0)
+      rspec-mocks (~> 3.2.0)
+    rspec-core (3.2.3)
+      rspec-support (~> 3.2.0)
+    rspec-expectations (3.2.1)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.2.0)
+    rspec-mocks (3.2.1)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.2.0)
+    rspec-support (3.2.2)
+
+PLATFORMS
+  java
+
+DEPENDENCIES
+  Agis!
+  database_cleaner
+  mlanett-redis-lock
+  redis
+  rspec

@@ -10,6 +10,7 @@ Agis is a Ruby class mixin that provides a rudimentary messagebox-based lock-fre
 - Actors usually called "whenever" and end when their message box is empty (agis_ncrunch - 1 second timeout, agis_bcrunch - 60 second timeout)
 - Actors can also be run forever (or a very long time) with agis_lcrunch
 - Objects are redis-locked via @agis_id, otherwise self.id like ActiveModel/ActiveRecord
+- Arguments are stored as JSON objects, hashes are string-keyed instead of symbol-keyed
 
 Requires [mlanett-redis-lock](http://www.github.com/mlanett/redis-lock), required as "redis-lock"
 

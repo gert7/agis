@@ -2,8 +2,8 @@ Gem::Specification.new do |s|
   s.name        = 'Agis'
   s.version     = '0.1.0'
   s.date        = '2015-05-17'
-  s.summary     = "Messagebox Redis Actors for ActiveRecord"
-  s.description = "Messagebox Redis Actors for ActiveRecord"
+  s.summary     = "Messagebox Redis Actors for Ruby"
+  s.description = "Messagebox Redis Actors for Ruby and ActiveRecord"
   s.authors     = ["Gert Oja"]
   s.email       = 'gertoja1@gmail.com'
   s.files       = ["lib/agis.rb"]

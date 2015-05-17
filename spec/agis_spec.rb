@@ -79,7 +79,7 @@ describe Agis do
     end
     
     it "defines a method that accepts a hash" do
-      expect(Guffin.new.agis_call($redis, :rhash, {hello: "world"}, :hello)).to eq "world"
+      expect(Guffin.new.agis_call($redis, :rhash, {"hello" => "world"}, :hello)).to eq "world"
     end
     
     it "defines a method that accepts an array" do
@@ -92,7 +92,7 @@ describe Agis do
       g = Guffin.new
       g.agis_push $redis, :mult, 77, 3
       g.agis_push $redis, :ident
-      g.agis_push $redis, :rhash, {dingo: "dango", fringo: "frango"}, :fringo
+      g.agis_push $redis, :rhash, {"dingo" => "dango", "fringo" => "frango"}, :fringo
       expect(g.agis_ncrunch $redis).to eq "frango"
     end
   end

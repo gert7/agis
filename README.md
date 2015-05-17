@@ -1,7 +1,7 @@
 Agis
 ====
 
-[![Gem Version](https://badge.fury.io/rb/Agis.svg)](http://badge.fury.io/rb/Agis)
+[![Gem Version](https://badge.fury.io/rb/agis.svg)](http://badge.fury.io/rb/agis)
 
 Agis is a Ruby class mixin that provides a rudimentary messagebox-based lock-free actor call mechanism through and for Redis.
 
@@ -14,7 +14,12 @@ Agis is a Ruby class mixin that provides a rudimentary messagebox-based lock-fre
 - Objects are redis-locked via @agis_id, otherwise self.id like ActiveModel/ActiveRecord
 - Arguments are stored as JSON objects, hashes are string-keyed instead of symbol-keyed
 
+Installation
+---
+
 Requires [mlanett-redis-lock](http://www.github.com/mlanett/redis-lock), required as "redis-lock"
+
+    gem 'agis'
 
 Example
 ---
@@ -30,7 +35,7 @@ Example
       include Agis
       def initialize
         # only increment the value if it's eq to arg1 when the actor calls this method
-        agis_defm0 do :incif |redis, arg1|
+        agis_defm1 do :incif |redis, arg1|
           @value = redis.get("counter:" + self.id) or 0
           if(@value == arg1)
             @value += 1

@@ -42,4 +42,3 @@ Example
     pc.agis_ncrunch($redis)
     puts pc.value
 
-

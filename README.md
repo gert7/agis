@@ -1,6 +1,8 @@
 Agis
 ====
 
+[![Gem Version](https://badge.fury.io/rb/Agis.svg)](http://badge.fury.io/rb/Agis)
+
 Agis is a Ruby class mixin that provides a rudimentary messagebox-based lock-free actor call mechanism through and for Redis.
 
 - Classes are provided Agis-specific methods with 0, 1, 2 or 3 arguments

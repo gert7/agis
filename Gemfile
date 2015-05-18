@@ -5,3 +5,4 @@ gemspec
 
 gem 'rspec'
 gem 'database_cleaner', require: false
+gem 'rdoc', require: false

@@ -5,6 +5,8 @@ module Agis
   
   attr_accessor :agis_methods, :agis_id
   
+  # called whenever a parameter in the queue is of type method
+  # this is unusual behavior
   class MethodCallInParameters < Exception
   end
   
@@ -12,6 +14,8 @@ module Agis
     @agis_methods = Hash.new
   end
 
+  # the name of the key used for the Agis message box in Redis
+  # the lock is this string followed by ".LOCK"
   def agis_mailbox
     "AGIS TERMINAL : " + self.class.to_s + " : " + (self.agis_id or self.id.to_s)
   end
@@ -66,6 +70,7 @@ module Agis
     end
   end
   
+  # create a method with no parameters
   def agis_defm0(name, &b)
     push = Proc.new do |redis, arg1, arg2, arg3|
       redis.rpush self.agis_mailbox, "m:" + name.to_s
@@ -73,6 +78,7 @@ module Agis
     @agis_methods[name] = [0, push, b]
   end
   
+  # create a method with one parameter
   def agis_defm1(name, &b)
     push = Proc.new do |redis, arg1, arg2, arg3|
       redis.multi do
@@ -83,6 +89,7 @@ module Agis
     @agis_methods[name] = [1, push, b]
   end
   
+  # create a method with two parameters
   def agis_defm2(name, &b)
     push = Proc.new do |redis, arg1, arg2, arg3|
       redis.multi do
@@ -94,6 +101,7 @@ module Agis
     @agis_methods[name] = [2, push, b]
   end
   
+  # create a method with three parameters
   def agis_defm3(name, &b)
     push = Proc.new do |redis, arg1, arg2, arg3|
       redis.multi do
@@ -106,6 +114,7 @@ module Agis
     @agis_methods[name] = [3, push, b]
   end
   
+  # alias for agis_defm3
   def agis_def(name, &b)
     agis_defm3(name, b)
   end
@@ -169,17 +178,19 @@ module Agis
     end
   end
   
-  # Get method
+  # Get method in the format
+  # [arity, pushing method, method body]
   def agis_method(name)
     @agis_methods[name]
   end
   
-  # Call method -> push
+  # Push a method call into the queue
   def agis_push(redis, name, arg1=nil, arg2=nil, arg3=nil)
     @agis_methods[name][1].call(redis, arg1, arg2, arg3)
   end
   
-  # Call and ncrunch immediately
+  # Push a call and ncrunch immediately
+  # this returns the last return value from the queue
   def agis_call(redis, name, arg1=nil, arg2=nil, arg3=nil)
     @agis_methods[name][1].call(redis, arg1, arg2, arg3)
     agis_ncrunch(redis)

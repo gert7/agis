@@ -41,6 +41,10 @@ class Guffin < Object
     agis_defm1 :arr do |red, arr|
       arr[1]
     end
+    
+    agis_defm1 :boolme do |red, bool|
+      bool ? "Hello" : "Nope"
+    end
   end
 
   def ay
@@ -84,6 +88,18 @@ describe Agis do
     
     it "defines a method that accepts an array" do
       expect(Guffin.new.agis_call($redis, :arr, [71, 88, 33])).to eq 88
+    end
+    
+    it "defines a method that accepts a true" do
+      expect(Guffin.new.agis_call($redis, :boolme, true)).to eq "Hello"
+    end
+    
+    it "defines a method that accepts a false" do
+      expect(Guffin.new.agis_call($redis, :boolme, false)).to eq "Nope"
+    end
+    
+    it "calls 1 parameter on a 2-parameter method" do
+      expect(Guffin.new.agis_call($redis, :sconcat, "Hello")).to eq "Hello "
     end
   end
   

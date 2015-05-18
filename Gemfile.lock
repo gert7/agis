@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    Agis (0.1.0)
+    agis (0.1.2)
 
 GEM
   remote: https://rubygems.org/
@@ -29,7 +29,7 @@ PLATFORMS
   java
 
 DEPENDENCIES
-  Agis!
+  agis!
   database_cleaner
   mlanett-redis-lock
   redis

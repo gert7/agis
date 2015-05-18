@@ -5,12 +5,15 @@ module Agis
   
   attr_accessor :agis_methods, :agis_id
   
+  class MethodCallInParameters < Exception
+  end
+  
   def initialize
     @agis_methods = Hash.new
   end
 
   def agis_mailbox
-    "AGIS TERMINAL : " + self.class.to_s + " : " + (@agis_id or self.id.to_s)
+    "AGIS TERMINAL : " + self.class.to_s + " : " + (self.agis_id or self.id.to_s)
   end
   
   def agis_aconv(v)
@@ -27,7 +30,13 @@ module Agis
     when Array
       a = "a:" + v.to_json
     when Float
-      a = "f:" + v.to_s
+      a = "d:" + v.to_s
+    when TrueClass
+      a = "t:"
+    when FalseClass
+      a = "f:"
+    when NilClass
+      a = "n:"
     else
       a = "h:" + v.to_json
     end
@@ -44,43 +53,61 @@ module Agis
       JSON.parse!(v[2..-1], symbolize_names: false)
     when "a:"
       JSON.parse!(v[2..-1], symbolize_names: false)
-    when "f:"
+    when "d:"
       v[2..-1].to_f
+    when "t:"
+      true
+    when "f:"
+      false
+    when "n:"
+      nil
+    when "m:"
+      raise MethodCallInParameters
     end
   end
   
   def agis_defm0(name, &b)
     push = Proc.new do |redis, arg1, arg2, arg3|
-      redis.rpush self.agis_mailbox, name
+      redis.rpush self.agis_mailbox, "m:" + name.to_s
     end
     @agis_methods[name] = [0, push, b]
   end
   
   def agis_defm1(name, &b)
     push = Proc.new do |redis, arg1, arg2, arg3|
-      redis.rpush self.agis_mailbox, name
-      redis.rpush self.agis_mailbox, agis_aconv(arg1)
+      redis.multi do
+        redis.rpush self.agis_mailbox, "m:" + name.to_s
+        redis.rpush self.agis_mailbox, agis_aconv(arg1)
+      end
     end
     @agis_methods[name] = [1, push, b]
   end
   
   def agis_defm2(name, &b)
     push = Proc.new do |redis, arg1, arg2, arg3|
-      redis.rpush self.agis_mailbox, name
-      redis.rpush self.agis_mailbox, agis_aconv(arg1)
-      redis.rpush self.agis_mailbox, agis_aconv(arg2)
+      redis.multi do
+        redis.rpush self.agis_mailbox, "m:" + name.to_s
+        redis.rpush self.agis_mailbox, agis_aconv(arg1)
+        redis.rpush self.agis_mailbox, agis_aconv(arg2)
+      end
     end
     @agis_methods[name] = [2, push, b]
   end
   
   def agis_defm3(name, &b)
     push = Proc.new do |redis, arg1, arg2, arg3|
-      redis.rpush self.agis_mailbox, name
-      redis.rpush self.agis_mailbox, agis_aconv(arg1)
-      redis.rpush self.agis_mailbox, agis_aconv(arg2)
-      redis.rpush self.agis_mailbox, agis_aconv(arg3)
+      redis.multi do
+        redis.rpush self.agis_mailbox, "m:" + name.to_s
+        redis.rpush self.agis_mailbox, agis_aconv(arg1)
+        redis.rpush self.agis_mailbox, agis_aconv(arg2)
+        redis.rpush self.agis_mailbox, agis_aconv(arg3)
+      end
     end
     @agis_methods[name] = [3, push, b]
+  end
+  
+  def agis_def(name, &b)
+    agis_defm3(name, b)
   end
   
   def _agis_crunch(lock, redis)
@@ -90,8 +117,10 @@ module Agis
     # end
     # return 0
     loop do
-      if mn = redis.lpop(self.agis_mailbox)
+      mni = redis.lpop(self.agis_mailbox)
+      if mni and mni[0..1] == "m:"
         args = []
+        mn = mni[2..-1]
         mc = @agis_methods[mn.to_sym][0]
         met = @agis_methods[mn.to_sym][2]
 
@@ -110,7 +139,7 @@ module Agis
         end
         lock.extend_life 5
         mn = nil
-      else
+      elsif mn == nil
         return @last
       end
     end

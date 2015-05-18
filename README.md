@@ -44,8 +44,7 @@ Example
     end
     
     pc = PerCounter.new
-    pc.agis_push($redis, :incif, pc.value)
-    pc.agis_ncrunch($redis) # or push+ncrunch with agis_call
+    pc.agis_call($redis, :incif, pc.value)
     puts pc.value
 
 Bank accounts

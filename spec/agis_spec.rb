@@ -45,6 +45,15 @@ class Guffin < Object
     agis_defm1 :boolme do |red, bool|
       bool ? "Hello" : "Nope"
     end
+    
+    agis_defm1 :echo do |red, txt|
+      txt
+    end
+    
+    agis_defm0 :testll do |red|
+      self.agis_push(red, :echo, "FAILURE")
+      "SUCCESS"
+    end
   end
 
   def ay
@@ -108,8 +117,12 @@ describe Agis do
       g = Guffin.new
       g.agis_push $redis, :mult, 77, 3
       g.agis_push $redis, :ident
-      g.agis_push $redis, :rhash, {"dingo" => "dango", "fringo" => "frango"}, :fringo
-      expect(g.agis_ncrunch $redis).to eq "frango"
+      expect(g.agis_call($redis, :rhash, {"dingo" => "dango", "fringo" => "frango"}, :fringo)).to eq "frango"
+    end
+    
+    it "doesn't disrupt the return last expression rule" do
+      g = Guffin.new
+      expect(g.agis_call($redis, :testll)).to eq "SUCCESS"
     end
   end
 end

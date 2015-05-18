@@ -119,7 +119,7 @@ module Agis
     agis_defm3(name, b)
   end
   
-  def _agis_crunch(lock, redis)
+  def _agis_crunch(lock, redis, until_sig)
     # loop do
     #  a = redis.lpop(self.agis_mailbox)
     #  a ? puts a : break
@@ -132,7 +132,7 @@ module Agis
         mn = mni[2..-1]
         mc = @agis_methods[mn.to_sym][0]
         met = @agis_methods[mn.to_sym][2]
-
+        
         mc.times do
           args.push agis_fconv(redis.lpop(self.agis_mailbox))
         end
@@ -148,23 +148,17 @@ module Agis
         end
         lock.extend_life 5
         mn = nil
-      elsif mn == nil
+      elsif mni[0..1] == "r:"
+        if(mni[2..-1] == until_sig)
+          return @last
+        else
+          puts "AGIS error 1: Orphaned return marker! An agis_call was here..."
+        end
+      elsif mni == nil
         return @last
+      else
+        puts "AGIS error 2: Unrecognized line! Might be an orphaned thread..."
       end
-    end
-  end
-  
-  # Crunch if the lock is available, returns when box is empty, lock timeout 1 second
-  def agis_ncrunch(redis)
-    redis.lock(agis_mailbox + ".LOCK", life: 4, acquire: 1) do |lock|
-      _agis_crunch(lock, redis)
-    end
-  end
-  
-  # Wait until the lock is available, returns when box is empty, lock timeout 60 seconds
-  def agis_bcrunch(redis)
-    redis.lock(agis_mailbox + ".LOCK", life: 4, acquire: 60) do |lock|
-      _agis_crunch(lock, redis)
     end
   end
   
@@ -192,8 +186,12 @@ module Agis
   # Push a call and ncrunch immediately
   # this returns the last return value from the queue
   def agis_call(redis, name, arg1=nil, arg2=nil, arg3=nil)
-    @agis_methods[name][1].call(redis, arg1, arg2, arg3)
-    agis_ncrunch(redis)
+    redis.lock(agis_mailbox + ".LOCK", life: 4, acquire: 60) do |lock|
+      @agis_methods[name][1].call(redis, arg1, arg2, arg3)
+      until_sig = Time.now.to_s + ":" + Process.pid.to_s
+      redis.rpush self.agis_mailbox, "r:" + until_sig
+      _agis_crunch(lock, redis, until_sig)
+    end
   end
 end
 

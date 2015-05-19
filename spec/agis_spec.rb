@@ -54,6 +54,14 @@ class Guffin < Object
       self.agis_push(red, :echo, "FAILURE")
       "SUCCESS"
     end
+    
+    agis_defm1 :redo do |red, n|
+      if(n < 1)
+        agis_recall(red, :redo, n + 1)
+      else
+        "A SUCCESS"
+      end
+    end
   end
 
   def ay
@@ -123,6 +131,12 @@ describe Agis do
     it "doesn't disrupt the return last expression rule" do
       g = Guffin.new
       expect(g.agis_call($redis, :testll)).to eq "SUCCESS"
+    end
+  end
+  
+  describe "#agis_recall" do
+    it "retries a method call" do
+      expect(Guffin.new.agis_call($redis, :redo, 0)).to eq "A SUCCESS"
     end
   end
 end

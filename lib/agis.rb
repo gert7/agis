@@ -188,10 +188,18 @@ module Agis
   def agis_call(redis, name, arg1=nil, arg2=nil, arg3=nil)
     redis.lock(agis_mailbox + ".LOCK", life: 4, acquire: 60) do |lock|
       @agis_methods[name][1].call(redis, arg1, arg2, arg3)
-      until_sig = Time.now.to_s + ":" + Process.pid.to_s
+      until_sig = Time.now.to_s + ":" + Process.pid.to_s + Random.new.rand(4000000000).to_s
       redis.rpush self.agis_mailbox, "r:" + until_sig
       _agis_crunch(lock, redis, until_sig)
     end
+  end
+  
+  # Method for calling another Agis method, or retrying.
+  # this doesn't touch the message box because it should
+  # only be called inside an Agis method, where the box
+  # is already guaranteed to be locked
+  def agis_recall(redis, name, arg1=nil, arg2=nil, arg3=nil)
+    met = @agis_methods[name][2].call(redis, arg1, arg2, arg3)
   end
 end
 

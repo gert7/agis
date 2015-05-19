@@ -31,15 +31,16 @@ Example
       include Agis
       def agis_id; "any"; end
       
-      def initialize
-        # only increment the value if it's eq to arg1 when the actor calls this method
-        agis_defm1 do :incif |redis, arg1|
-          @value = redis.get("counter:" + self.id) or 0
-          if(@value == arg1)
-            @value += 1
-            redis.set("counter:" + self.id, @value)
-          end
+      def incif(arg1) # only increment the value if it's eq to arg1 when the actor calls this method
+        @value = $redis.get("counter:" + self.id) or 0
+        if(@value == arg1)
+          @value += 1
+          $redis.set("counter:" + self.id, @value)
         end
+      end
+      
+      def initialize
+        agis_defm1 :incif 
       end
     end
     
@@ -74,4 +75,9 @@ We defined agis_id as being the sender's id, since the sender is the sensitive p
 The agis:create method will probably access the database to get lastref. Meanwhile, no one else is allowed to deal with the Transactions with this sender id, because the message box for it is locked.
 
 Even better, if there's any reason for the transaction to fall out of order in-between, we can retry the transaction by calling the agis:create method again, in the agis method itself - and only give up if the sender's balance isn't enough (or some other reason like frozen accounts), possibly raising an error.
+
+Retrying
+--------
+
+Agis allows retrying with agis_recall(), which accepts the same parameters as agis_call(). It doesn't tackle the message box, since it's already locked when called in an Agis method
 

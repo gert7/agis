@@ -131,20 +131,28 @@ module Agis
         args = []
         mn = mni[2..-1]
         mc = @agis_methods[mn.to_sym][0]
-        met = @agis_methods[mn.to_sym][2]
+        meti = @agis_methods[mn.to_sym][2]
+        case meti
+        when Proc
+          met = meti
+        when Symbol
+          met = self.method(meti)
+        when NilClass
+          met = self.method(mn.to_sym) # when proc is Nil, call the class methods all the same
+        end
         
         mc.times do
           args.push agis_fconv(redis.lpop(self.agis_mailbox))
         end
         case mc
         when 0
-          @last = met.call(redis)
+          @last = met.call()
         when 1
-          @last = met.call(redis, args[0])
+          @last = met.call(args[0])
         when 2
-          @last = met.call(redis, args[0], args[1])
+          @last = met.call(args[0], args[1])
         when 3
-          @last = met.call(redis, args[0], args[1], args[2])
+          @last = met.call(args[0], args[1], args[2])
         end
         lock.extend_life 5
         mn = nil
@@ -198,8 +206,8 @@ module Agis
   # this doesn't touch the message box because it should
   # only be called inside an Agis method, where the box
   # is already guaranteed to be locked
-  def agis_recall(redis, name, arg1=nil, arg2=nil, arg3=nil)
-    met = @agis_methods[name][2].call(redis, arg1, arg2, arg3)
+  def agis_recall(name, arg1=nil, arg2=nil, arg3=nil)
+    met = @agis_methods[name][2].call(arg1, arg2, arg3)
   end
 end
 

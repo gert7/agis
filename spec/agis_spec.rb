@@ -12,56 +12,62 @@ class Guffin < Object
   include Agis
   def id; 3; end
   
+  def exm(a)
+    return "Yes return " + a
+  end
+  
   def initialize
     super
     agis_defm0 :ident do
       "Hello"
     end
     
-    agis_defm1 :dupe do |red, r|
+    agis_defm1 :dupe do |r|
       r * 2
     end
     
-    agis_defm2 :mult do |red, r, s|
+    agis_defm2 :mult do |r, s|
       r * s
     end
     
-    agis_defm3 :mapify do |red, t, a, b|
+    agis_defm3 :mapify do |t, a, b|
       t[a] * b
     end
     
-    agis_defm2 :sconcat do |red, a, b|
+    agis_defm2 :sconcat do |a, b|
       a.to_s + " " + b.to_s
     end
     
-    agis_defm2 :rhash do |red, h, k|
+    agis_defm2 :rhash do |h, k|
       h[k]
     end
     
-    agis_defm1 :arr do |red, arr|
+    agis_defm1 :arr do |arr|
       arr[1]
     end
     
-    agis_defm1 :boolme do |red, bool|
+    agis_defm1 :boolme do |bool|
       bool ? "Hello" : "Nope"
     end
     
-    agis_defm1 :echo do |red, txt|
+    agis_defm1 :echo do |txt|
       txt
     end
     
-    agis_defm0 :testll do |red|
-      self.agis_push(red, :echo, "FAILURE")
+    agis_defm0 :testll do 
+      self.agis_push($redis, :echo, "FAILURE")
       "SUCCESS"
     end
     
-    agis_defm1 :redo do |red, n|
+    agis_defm1 :redo do |n|
       if(n < 1)
-        agis_recall(red, :redo, n + 1)
+        agis_recall(:redo, n + 1)
       else
         "A SUCCESS"
       end
     end
+    
+    agis_defm1 :exm
   end
 
   def ay
@@ -117,6 +123,10 @@ describe Agis do
     
     it "calls 1 parameter on a 2-parameter method" do
       expect(Guffin.new.agis_call($redis, :sconcat, "Hello")).to eq "Hello "
+    end
+    
+    it "defines a method of an actual class method" do
+      expect(Guffin.new.agis_call($redis, :exm, "world")).to eq "Yes return world"
     end
   end
   

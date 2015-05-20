@@ -10,6 +10,8 @@ Agis is provided as a mixin that only requires a Redis instance as external data
 
 The Actor model doesn't provide concurrency or parallelism, it assumes that concurrent access to shared data will happen in the environment, wraps around it and becomes its 'agent', and executes every command in the message box one after another - it's inherently and forcefully single-threaded 
 
+As of Agis 0.1.7, methods that crash - either not returning nor raising an error - will be retried. This design choice made a lot of sense from an Actors point of view, as such you should write your code to be safely callable multiple times.
+
 Installation
 ---
 
@@ -79,5 +81,7 @@ Even better, if there's any reason for the transaction to fall out of order in-b
 Retrying
 --------
 
-Agis allows retrying with agis_recall(), which accepts the same parameters as agis_call(). It doesn't tackle the message box, since it's already locked when called in an Agis method
+Agis allows retrying with agis_recall(), which accepts the same parameters as agis_call(). It doesn't tackle the message box, since it's already locked when called in an Agis method. This does nothing but call the same method already described.
+
+Agis doesn't remove any call from the message box that does anything other than return or raise an exception of type StandardError. Agis assumes that the call crashed and retries it. As a result your methods should be written in a form of deja vu, assuming they've already crashed and are being called again.
 

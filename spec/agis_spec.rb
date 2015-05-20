@@ -130,20 +130,6 @@ describe Agis do
     end
   end
   
-  describe "#agis_push" do
-    it "pushes three method calls and recovers the last" do
-      g = Guffin.new
-      g.agis_push $redis, :mult, 77, 3
-      g.agis_push $redis, :ident
-      expect(g.agis_call($redis, :rhash, {"dingo" => "dango", "fringo" => "frango"}, :fringo)).to eq "frango"
-    end
-    
-    it "doesn't disrupt the return last expression rule" do
-      g = Guffin.new
-      expect(g.agis_call($redis, :testll)).to eq "SUCCESS"
-    end
-  end
-  
   describe "#agis_recall" do
     it "retries a method call" do
       expect(Guffin.new.agis_call($redis, :redo, 0)).to eq "A SUCCESS"

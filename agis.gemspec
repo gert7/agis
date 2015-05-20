@@ -1,7 +1,7 @@
 Gem::Specification.new do |s|
   s.name        = 'agis'
-  s.version     = '0.1.6'
-  s.date        = '2015-05-17'
+  s.version     = '0.1.7'
+  s.date        = '2015-05-20'
   s.summary     = "Messagebox Redis Actors for Ruby"
   s.description = "Messagebox Redis Actors for Ruby and ActiveRecord"
   s.authors     = ["Gert Oja"]

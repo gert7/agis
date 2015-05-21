@@ -81,7 +81,16 @@ Even better, if there's any reason for the transaction to fall out of order in-b
 Retrying
 --------
 
-Agis allows retrying with agis_recall(), which accepts the same parameters as agis_call(). It doesn't tackle the message box, since it's already locked when called in an Agis method. This does nothing but call the same method already described.
+Agis allows retrying with agis_recall(), which accepts the same parameters as agis_call(). It doesn't tackle the message box, since it's already locked when called in an Agis method. This does nothing but call the given method among the agis_methods.
 
-Agis doesn't remove any call from the message box that does anything other than return or raise an exception of type StandardError. Agis assumes that the call crashed and retries it. As a result your methods should be written in a form of deja vu, assuming they've already crashed and are being called again.
+Agis doesn't remove any call from the message box that does anything other than return or raise an exception of type StandardError. Agis assumes that the call crashed and retries it. As a result your methods should be written idempotently - safe to call several times - or more bluntly - assuming they've already crashed and are being called again.
+
+This can allow unexpected things to happen in your application without huge data consistency and integrity concerns. For instance, the following can happen:
+
+1. A user visits a page that calls an actor method, possibly involved in otherwise unsafe ActiveRecord or Redis writing
+2. The method call crashes during execution, and the call remains in the message box
+3. The user becomes frustrated and reloads the page with the same data in the request
+4. The system now retries the original method call, as well as the one of the new request
+5. The same method has now been called a whole 3 times: failing once and succeeding <b>twice</b>
+- If the method is implemented idempotently, there are no security or integrity concerns here (apart from possible performance concerns, although the execution might be made aware of repetition)
 

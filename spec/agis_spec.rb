@@ -9,6 +9,7 @@ puts $redis
 DatabaseCleaner[:redis].strategy = :truncation
 
 class Guffin < Object
+  attr_accessor :tryvar
   include Agis
   def id; 3; end
   
@@ -65,6 +66,15 @@ class Guffin < Object
       else
         "A SUCCESS"
       end
+    end
+    
+    agis_defm0 :exceptor do
+      raise StandardError
+      "hey ho this will never return"
+    end
+    
+    agis_defm1 :setvar do |v|
+      self.tryvar = v
     end
     
     agis_defm1 :exm
@@ -127,6 +137,34 @@ describe Agis do
     
     it "defines a method of an actual class method" do
       expect(Guffin.new.agis_call($redis, :exm, "world")).to eq "Yes return world"
+    end
+  end
+  
+  describe "#agis_call" do
+    it "captures an exception and shows it to you" do
+      expect { Guffin.new.agis_call($redis, :exceptor) }.to raise_error(StandardError)
+    end
+    
+    it "captures an exception and doesn't retry the method" do
+      expect { Guffin.new.agis_call($redis, :exceptor) }.to raise_error(StandardError)
+      expect { Guffin.new.agis_call($redis, :ident) }.not_to raise_error
+    end
+    
+    it "assures the setvar probe works" do
+      g = Guffin.new
+      g.agis_call($redis, :setvar, "Variable set")
+      expect(g.tryvar).to eq "Variable set"
+    end
+    
+    it "retrying raising exception, ignores it because it's ancient" do
+      g = Guffin.new
+      $redis.rpush g.agis_mailbox, "m:exceptor"
+      $redis.rpush g.agis_mailbox, "n:"
+      $redis.rpush g.agis_mailbox, "n:"
+      $redis.rpush g.agis_mailbox, "n:"
+      $redis.rpush g.agis_mailbox, "r:whatever this is a dud return"
+      expect { g.agis_call($redis, :setvar, "trial")}.not_to raise_error
+      expect(g.tryvar).to eq "trial"
     end
   end
   

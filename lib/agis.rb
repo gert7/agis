@@ -104,7 +104,7 @@ module Agis
     agis_defm3(name, b)
   end
   
-  def _agis_crunch(lock, redis, until_sig)
+  def _agis_crunch(lock, redis, usig)
     # loop do
     #  a = redis.lpop(self.agis_mailbox)
     #  a ? puts a : break
@@ -120,6 +120,7 @@ module Agis
         mn = mni[2..-1]
         mc = @agis_methods[mn.to_sym][0]
         meti = @agis_methods[mn.to_sym][2]
+        until_sig = "r:" + usig
         case meti
         when Proc
           met = meti
@@ -141,12 +142,12 @@ module Agis
             agis_last = met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3]))
           end
         rescue => e
+          raise e if args[4] == until_sig
+        ensure
           5.times { redis.lpop self.agis_mailbox }
-          raise e
         end
         lock.extend_life 5
         mn = nil
-        5.times { redis.lpop self.agis_mailbox }
         return agis_last if args[4] == until_sig
       else
         puts "AGIS error 2: Unrecognized line! Might be an orphaned thread..."

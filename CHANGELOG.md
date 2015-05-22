@@ -9,3 +9,6 @@
 - Fixed size queue frames
 - Idempotent retrying approach
 
+0.1.9
+
+- Retry if exceptions or crash, only remove from queue if return

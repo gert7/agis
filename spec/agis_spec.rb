@@ -9,7 +9,7 @@ puts $redis
 DatabaseCleaner[:redis].strategy = :truncation
 
 class Guffin < Object
-  attr_accessor :tryvar
+  attr_accessor :tryvar, :stopvar
   include Agis
   def id; 3; end
   
@@ -19,6 +19,8 @@ class Guffin < Object
   
   def initialize
     super
+    stopvar = 0
+    
     agis_defm0 :ident do
       "Hello"
     end
@@ -68,9 +70,15 @@ class Guffin < Object
       end
     end
     
+    agis_defm0 :nexceptor do
+      stopvar += 1
+      raise StandardError unless stopvar = 2
+      "hey ho this will return"
+    end
+    
     agis_defm0 :exceptor do
+      stopvar += 1
       raise StandardError
-      "hey ho this will never return"
     end
     
     agis_defm1 :setvar do |v|
@@ -141,13 +149,8 @@ describe Agis do
   end
   
   describe "#agis_call" do
-    it "captures an exception and shows it to you" do
-      expect { Guffin.new.agis_call($redis, :exceptor) }.to raise_error(StandardError)
-    end
-    
-    it "captures an exception and doesn't retry the method" do
-      expect { Guffin.new.agis_call($redis, :exceptor) }.to raise_error(StandardError)
-      expect { Guffin.new.agis_call($redis, :ident) }.not_to raise_error
+    it "captures an exception and fails to finish the call" do
+      expect { Guffin.new.agis_call($redis, :exceptor) }.to raise_error(Agis::AgisRetryAttemptsExceeded)
     end
     
     it "assures the setvar probe works" do
@@ -158,12 +161,12 @@ describe Agis do
     
     it "retrying raising exception, ignores it because it's ancient" do
       g = Guffin.new
-      $redis.rpush g.agis_mailbox, "m:exceptor"
+      $redis.rpush g.agis_mailbox, "m:nexceptor"
       $redis.rpush g.agis_mailbox, "n:"
       $redis.rpush g.agis_mailbox, "n:"
       $redis.rpush g.agis_mailbox, "n:"
       $redis.rpush g.agis_mailbox, "r:whatever this is a dud return"
-      expect { g.agis_call($redis, :setvar, "trial")}.not_to raise_error
+      g.agis_call($redis, :setvar, "trial")
       expect(g.tryvar).to eq "trial"
     end
   end

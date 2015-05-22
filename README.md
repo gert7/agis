@@ -10,7 +10,7 @@ Agis is provided as a mixin that only requires a Redis instance as external data
 
 The Actor model doesn't provide concurrency or parallelism, it assumes that concurrent access to shared data will happen in the environment, wraps around it and becomes its 'agent', and executes every command in the message box one after another - it's inherently and forcefully single-threaded 
 
-As of Agis 0.1.7, methods that crash - either not returning nor raising an error - will be retried. This design choice made a lot of sense from an Actors point of view, as such you should write your code to be safely callable multiple times.
+As of Agis 0.1.9, methods that crash or raise an exception above the method itself will be retried forever until they return, but only up to 3 times via a single call to agis_call before returning an AgisRetryAttemptsExceeded. This requires you to write idempotent but retry-guaranteed methods, which leads to more reliable code.
 
 Installation
 ---
@@ -83,14 +83,45 @@ Retrying
 
 Agis allows retrying with agis_recall(), which accepts the same parameters as agis_call(). It doesn't tackle the message box, since it's already locked when called in an Agis method. This does nothing but call the given method among the agis_methods.
 
-Agis doesn't remove any call from the message box that does anything other than return or raise an exception of type StandardError. Agis assumes that the call crashed and retries it. As a result your methods should be written idempotently - safe to call several times - or more bluntly - assuming they've already crashed and are being called again.
+Agis doesn't remove any call from the message box that crashes or raises an exception. Instead it will retry it each time. A single agis_call will retry the failed call 3 times until raising an AgisRetryAttemptsExceeded error. As a result, you must write methods which:
 
-This can allow unexpected things to happen in your application without huge data consistency and integrity concerns. For instance, the following can happen:
+- Assume they will be retried several times
+- Will be retried if they raise an exception that isn't handled in the method itself
 
-1. A user visits a page that calls an actor method, possibly involved in otherwise unsafe ActiveRecord or Redis writing
-2. The method call crashes during execution, and the call remains in the message box
-3. The user becomes frustrated and reloads the page with the same data in the request
-4. The system now retries the original method call, as well as the one of the new request
-5. The same method has now been called a whole 3 times: failing once and succeeding <b>twice</b>
-- If the method is implemented idempotently, there are no security or integrity concerns here (apart from possible performance concerns, although the execution might be made aware of repetition)
+However, these restrictions are balanced by the following guarantees :
+
+- Methods will be retried until they succeed
+- Methods called through the same message box (classname + Object#agis_id) are guaranteed to run in a single thread, in sequence
+
+Instance variable caveat
+------------------------
+
+If you write code that you assume will be retried, the only thing you can be sure of is the classname and agis_id on the message box, everything else is variable. If you write code like this:
+
+    class User
+    ...
+      def bind # agis method
+        v = self.bind_commit_id
+        exceptional_procedure(v)
+      end
+    ...
+    end
+    
+    usr = User.find(711)
+    usr.bind_commit_id = Bind.create.id
+    usr.agis_call($redis, :bind)
+
+This code reads bind_commit_id from the current instance, but Agis almost assumes that the instance isn't the same as it was when the actor call was made. A working version of this code would accept instance variables as parameters:
+
+    class User
+    ...
+      def bind(bid) # agis method
+        exceptional_procedure(bid)
+      end
+    ...
+    end
+    
+    usr = User.find(711)
+    bid = Bind.create.id
+    usr.agis_call($redis, :bind, bid)
 

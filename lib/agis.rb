@@ -7,7 +7,10 @@ module Agis
   
   # called whenever a parameter in the queue is of type method
   # this is unusual behavior
-  class MethodCallInParameters < Exception
+  class MethodCallInParameters < StandardError
+  end
+  
+  class AgisRetryAttemptsExceeded < StandardError
   end
   
   def initialize
@@ -104,6 +107,13 @@ module Agis
     agis_defm3(name, b)
   end
   
+  def pretty_exception(args, e)
+    puts "Agis method call failed: " + args.to_s
+    e.backtrace.each do |v|
+      puts v.to_s
+    end
+  end
+  
   def _agis_crunch(lock, redis, usig)
     # loop do
     #  a = redis.lpop(self.agis_mailbox)
@@ -111,6 +121,8 @@ module Agis
     # end
     # return 0
     agis_last = nil
+    
+    retryattempts = 0
     
     loop do
       args = redis.lrange(self.agis_mailbox, 0, 4)
@@ -141,14 +153,15 @@ module Agis
           when 3
             agis_last = met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3]))
           end
-        rescue => e
-          raise e if args[4] == until_sig
-        ensure
           5.times { redis.lpop self.agis_mailbox }
+          lock.extend_life 5
+          mn = nil
+          return agis_last if args[4] == until_sig
+        rescue => e
+          puts pretty_exception(args, e)
+          retryattempts += 1
+          raise AgisRetryAttemptsExceeded if retryattempts >= 3
         end
-        lock.extend_life 5
-        mn = nil
-        return agis_last if args[4] == until_sig
       else
         puts "AGIS error 2: Unrecognized line! Might be an orphaned thread..."
       end

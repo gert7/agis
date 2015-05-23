@@ -87,35 +87,32 @@ module Agis
   
   def agis_pushuni(name)
     return Proc.new do |redis, arg1, arg2, arg3|
-      redis.rpush self.agis_mailbox, "m:" + name.to_s
-      redis.rpush self.agis_mailbox, agis_aconv(arg1)
-      redis.rpush self.agis_mailbox, agis_aconv(arg2)
-      redis.rpush self.agis_mailbox, agis_aconv(arg3)
+      
     end
   end
   
   # create a method with no parameters
   def agis_defm0(name, &b)
     @agis_methods ||= Hash.new
-    @agis_methods[name] = [0, agis_pushuni(name), b]
+    @agis_methods[name] = [0, b]
   end
   
   # create a method with one parameter
   def agis_defm1(name, &b)
     @agis_methods ||= Hash.new
-    @agis_methods[name] = [1, agis_pushuni(name), b]
+    @agis_methods[name] = [1, b]
   end
   
   # create a method with two parameters
   def agis_defm2(name, &b)
     @agis_methods ||= Hash.new
-    @agis_methods[name] = [2, agis_pushuni(name), b]
+    @agis_methods[name] = [2, b]
   end
   
   # create a method with three parameters
   def agis_defm3(name, &b)
     @agis_methods ||= Hash.new
-    @agis_methods[name] = [3, agis_pushuni(name), b]
+    @agis_methods[name] = [3, b]
   end
   
   # alias for agis_defm3
@@ -170,7 +167,11 @@ module Agis
             agis_last = met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3]))
           end
           redis.multi do
-            5.times { redis.lpop self.agis_mailbox }
+            redis.lpop self.agis_mailbox
+            redis.lpop self.agis_mailbox
+            redis.lpop self.agis_mailbox
+            redis.lpop self.agis_mailbox
+            redis.lpop self.agis_mailbox
           end
           lock.extend_life (@agis_locktimeout or 4)
           mn = nil
@@ -206,9 +207,14 @@ module Agis
   # this returns the last return value from the queue
   def agis_call(redis, name, arg1=nil, arg2=nil, arg3=nil)
     redis.lock(self.agis_mailbox + ".LOCK", life: (@agis_locktimeout or 4), acquire: 8) do |lock|
-      @agis_methods[name][1].call(redis, arg1, arg2, arg3)
       until_sig = Time.now.to_s + ":" + Process.pid.to_s + Random.new.rand(4000000000).to_s
-      redis.rpush self.agis_mailbox, "r:" + until_sig
+      redis.multi do
+        redis.rpush self.agis_mailbox, "m:" + name.to_s
+        redis.rpush self.agis_mailbox, agis_aconv(arg1)
+        redis.rpush self.agis_mailbox, agis_aconv(arg2)
+        redis.rpush self.agis_mailbox, agis_aconv(arg3)
+        redis.rpush self.agis_mailbox, "r:" + until_sig
+      end
       _agis_crunch(lock, redis, until_sig)
     end
   end

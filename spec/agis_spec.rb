@@ -72,8 +72,9 @@ class Guffin < Object
     end
     
     agis_defm0 :nexceptor do
+      @agis_retrylimit = 3
       stopvar += 1
-      raise StandardError unless stopvar = 2
+      raise StandardError unless stopvar == 2
       "hey ho this will return"
     end
     

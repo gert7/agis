@@ -170,13 +170,13 @@ module Agis
             agis_last = met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3]))
           end
           5.times { redis.lpop self.agis_mailbox }
-          lock.extend_life 5
+          lock.extend_life (@agis_locktimeout or 4)
           mn = nil
           return agis_last if args[4] == until_sig
         rescue => e
           puts pretty_exception(args, e)
           retryattempts += 1
-          raise AgisRetryAttemptsExceeded if retryattempts >= 1
+          raise AgisRetryAttemptsExceeded if retryattempts >= (@agis_retrylimit or 1)
         end
       else
         puts "AGIS error 2: Unrecognized line! Might be an orphaned thread..."
@@ -189,7 +189,7 @@ module Agis
     redis.lock(self.agis_mailbox + ".LOCK", life: 5, acquire: 10) do |lock|
       loop do
         _agis_crunch(lock, redis)
-        lock.extend_life(5)
+        lock.extend_life (@agis_locktimeout or 4)
       end
     end
   end
@@ -203,7 +203,7 @@ module Agis
   # Push a call and ncrunch immediately
   # this returns the last return value from the queue
   def agis_call(redis, name, arg1=nil, arg2=nil, arg3=nil)
-    redis.lock(self.agis_mailbox + ".LOCK", life: 4, acquire: 60) do |lock|
+    redis.lock(self.agis_mailbox + ".LOCK", life: (@agis_locktimeout or 4), acquire: 5) do |lock|
       @agis_methods[name][1].call(redis, arg1, arg2, arg3)
       until_sig = Time.now.to_s + ":" + Process.pid.to_s + Random.new.rand(4000000000).to_s
       redis.rpush self.agis_mailbox, "r:" + until_sig

@@ -169,7 +169,9 @@ module Agis
           when 3
             agis_last = met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3]))
           end
-          5.times { redis.lpop self.agis_mailbox }
+          redis.multi do
+            5.times { redis.lpop self.agis_mailbox }
+          end
           lock.extend_life (@agis_locktimeout or 4)
           mn = nil
           return agis_last if args[4] == until_sig
@@ -179,7 +181,7 @@ module Agis
           raise AgisRetryAttemptsExceeded if retryattempts >= (@agis_retrylimit or 1)
         end
       else
-        puts "AGIS error 2: Unrecognized line! Might be an orphaned thread..."
+        puts "AGIS error 2: Unrecognized line! Might be an orphaned thread..." + mni.to_s
       end
     end
   end

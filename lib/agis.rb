@@ -85,12 +85,6 @@ module Agis
     end
   end
   
-  def agis_pushuni(name)
-    return Proc.new do |redis, arg1, arg2, arg3|
-      
-    end
-  end
-  
   # create a method with no parameters
   def agis_defm0(name, &b)
     @agis_methods ||= Hash.new
@@ -144,7 +138,7 @@ module Agis
       if(mni and mni[0..1] == "m:")
         mn = mni[2..-1]
         mc = @agis_methods[mn.to_sym][0]
-        meti = @agis_methods[mn.to_sym][2]
+        meti = @agis_methods[mn.to_sym][1]
         until_sig = "r:" + usig
         case meti
         when Proc
@@ -173,7 +167,7 @@ module Agis
             redis.lpop self.agis_mailbox
             redis.lpop self.agis_mailbox
           end
-          lock.extend_life (@agis_locktimeout or 4)
+          # lock.extend_life 4
           mn = nil
           return agis_last if args[4] == until_sig
         rescue => e
@@ -192,7 +186,7 @@ module Agis
     redis.lock(self.agis_mailbox + ".LOCK", life: 5, acquire: 10) do |lock|
       loop do
         _agis_crunch(lock, redis)
-        lock.extend_life (@agis_locktimeout or 4)
+        #lock.extend_life (@agis_locktimeout or 4)
       end
     end
   end
@@ -224,7 +218,7 @@ module Agis
   # only be called inside an Agis method, where the box
   # is already guaranteed to be locked
   def agis_recall(mn, arg1=nil, arg2=nil, arg3=nil)
-    meti = @agis_methods[mn.to_sym][2]
+    meti = @agis_methods[mn.to_sym][1]
     case meti
     when Proc
       met = meti

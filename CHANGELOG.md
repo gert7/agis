@@ -12,3 +12,8 @@
 0.1.9
 
 - Retry if exceptions or crash, only remove from queue if return
+
+0.1.10
+
+- Fixed a deadly mailbox failure
+

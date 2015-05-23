@@ -4,23 +4,17 @@ Agis
 [![Gem Version](https://badge.fury.io/rb/agis.svg)](http://badge.fury.io/rb/agis)
 [![Build Status](https://travis-ci.org/gert7/agis.svg)](https://travis-ci.org/gert7/agis)
 
-Agis provides any Ruby object, class or some other selection with its own message box, which can be locked and executed by any instance of Ruby. This allows a system of "free actors" or "actorless actors" which can run the entire message box and return the last result when it is empty without creating a separate thread of execution
 
-Agis is provided as a mixin that only requires a Redis instance as external data, while all functionality can be contained entirely in the class alone. Setting a custom agis_id method allows custom selections of records instead of the default call to .id
-
-The Actor model doesn't provide concurrency or parallelism, it assumes that concurrent access to shared data will happen in the environment, wraps around it and becomes its 'agent', and executes every command in the message box one after another - it's inherently and forcefully single-threaded 
-
-As of Agis 0.1.9, methods that crash or raise an exception above the method itself will be retried forever until they return, but only up to 3 times via a single call to agis_call before returning an AgisRetryAttemptsExceeded. This requires you to write idempotent but retry-guaranteed methods, which leads to more reliable code.
 
 Installation
----
+------------
 
 Requires [mlanett-redis-lock](http://www.github.com/mlanett/redis-lock), required as "redis-lock"
 
     gem 'agis'
 
 Example
----
+-------
 
     require 'agis'
     require 'redis'
@@ -31,7 +25,9 @@ Example
       attr_accessor :value
       
       include Agis
-      def agis_id; "any"; end
+      
+      def agis_id; "any"; end # Agis id is "any", the name of the message box of any instance of PerCounter
+                              # will be PerCounter : any
       
       def incif(arg1) # only increment the value if it's eq to arg1 when the actor calls this method
         @value = $redis.get("counter:" + self.id) or 0
@@ -51,7 +47,7 @@ Example
     puts pc.value
 
 Bank accounts
---------
+-------------
 
 Let's assume we have a transaction class like this one:
 
@@ -83,7 +79,7 @@ Retrying
 
 Agis allows retrying with agis_recall(), which accepts the same parameters as agis_call(). It doesn't tackle the message box, since it's already locked when called in an Agis method. This does nothing but call the given method among the agis_methods.
 
-Agis doesn't remove any call from the message box that crashes or raises an exception. Instead it will retry it each time. A single agis_call will retry the failed call 3 times until raising an AgisRetryAttemptsExceeded error. As a result, you must write methods which:
+Agis doesn't remove any call from the message box that crashes or raises an exception. Instead it will retry it each time. A single agis_call will retry the failed call or raises an AgisRetryAttemptsExceeded error. As a result, you must write methods which:
 
 - Assume they will be retried several times
 - Will be retried if they raise an exception that isn't handled in the method itself
@@ -93,8 +89,10 @@ However, these restrictions are balanced by the following guarantees :
 - Methods will be retried until they succeed
 - Methods called through the same message box (classname + Object#agis_id) are guaranteed to run in a single thread, in sequence
 
-Instance variable caveat
-------------------------
+The message box will effectively not move forward until the method call returns.
+
+Instance variables
+------------------
 
 If you write code that you assume will be retried, the only thing you can be sure of is the classname and agis_id on the message box, everything else is variable. If you write code like this:
 

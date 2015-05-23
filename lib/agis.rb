@@ -3,7 +3,7 @@ module Agis
   require 'redis-lock'
   require 'json'
   
-  attr_accessor :agis_methods, :agis_id
+  attr_accessor :agis_methods
   
   # called whenever a parameter in the queue is of type method
   # this is unusual behavior
@@ -13,6 +13,9 @@ module Agis
   class AgisRetryAttemptsExceeded < StandardError
   end
   
+  class NoAgisIDAvailable < StandardError
+  end
+  
   def initialize
     @agis_methods = Hash.new
   end
@@ -20,7 +23,16 @@ module Agis
   # the name of the key used for the Agis message box in Redis
   # the lock is this string followed by ".LOCK"
   def agis_mailbox
-    "AGIS TERMINAL : " + self.class.to_s + " : " + (self.agis_id or self.id.to_s)
+    begin
+      mid = self.agis_id
+    rescue NoMethodError
+    end
+    begin
+      mid ||= self.id
+    rescue NoMethodError
+    end
+    raise NoAgisIDAvailable unless mid
+    a = "AGIS TERMINAL : " + self.class.to_s + " : " + mid.to_s
   end
   
   def agis_aconv(v)
@@ -84,21 +96,25 @@ module Agis
   
   # create a method with no parameters
   def agis_defm0(name, &b)
+    @agis_methods ||= Hash.new
     @agis_methods[name] = [0, agis_pushuni(name), b]
   end
   
   # create a method with one parameter
   def agis_defm1(name, &b)
+    @agis_methods ||= Hash.new
     @agis_methods[name] = [1, agis_pushuni(name), b]
   end
   
   # create a method with two parameters
   def agis_defm2(name, &b)
+    @agis_methods ||= Hash.new
     @agis_methods[name] = [2, agis_pushuni(name), b]
   end
   
   # create a method with three parameters
   def agis_defm3(name, &b)
+    @agis_methods ||= Hash.new
     @agis_methods[name] = [3, agis_pushuni(name), b]
   end
   
@@ -160,7 +176,7 @@ module Agis
         rescue => e
           puts pretty_exception(args, e)
           retryattempts += 1
-          raise AgisRetryAttemptsExceeded if retryattempts >= 3
+          raise AgisRetryAttemptsExceeded if retryattempts >= 1
         end
       else
         puts "AGIS error 2: Unrecognized line! Might be an orphaned thread..."
@@ -170,7 +186,7 @@ module Agis
   
   # Wait until the lock is available, crunch forever
   def agis_lcrunch(redis)
-    redis.lock(agis_mailbox + ".LOCK", life: 5, acquire: 10) do |lock|
+    redis.lock(self.agis_mailbox + ".LOCK", life: 5, acquire: 10) do |lock|
       loop do
         _agis_crunch(lock, redis)
         lock.extend_life(5)
@@ -187,7 +203,7 @@ module Agis
   # Push a call and ncrunch immediately
   # this returns the last return value from the queue
   def agis_call(redis, name, arg1=nil, arg2=nil, arg3=nil)
-    redis.lock(agis_mailbox + ".LOCK", life: 4, acquire: 60) do |lock|
+    redis.lock(self.agis_mailbox + ".LOCK", life: 4, acquire: 60) do |lock|
       @agis_methods[name][1].call(redis, arg1, arg2, arg3)
       until_sig = Time.now.to_s + ":" + Process.pid.to_s + Random.new.rand(4000000000).to_s
       redis.rpush self.agis_mailbox, "r:" + until_sig

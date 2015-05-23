@@ -11,14 +11,15 @@ DatabaseCleaner[:redis].strategy = :truncation
 class Guffin < Object
   attr_accessor :tryvar, :stopvar
   include Agis
-  def id; 3; end
+  def agis_id
+    3
+  end
   
   def exm(a)
     return "Yes return " + a
   end
   
   def initialize
-    super
     stopvar = 0
     
     agis_defm0 :ident do
@@ -100,6 +101,42 @@ describe Agis do
 
   it "sets an @agis_methods hash" do
     expect(Guffin.new.ay.class).to eq Hash
+  end
+  
+  describe "#agis_mailbox" do
+    it "fetches the correct mailbox id" do
+      expect(Guffin.new.agis_mailbox).to eq "AGIS TERMINAL : Guffin : 3"
+    end
+  
+    it "raises an error when neither agis_id or id are set" do
+      class Nup
+        include Agis
+        
+        def initialize
+          agis_defm0 :ident do
+            "Oops"
+          end
+        end
+      end
+      expect { Nup.new.agis_call($redis, :ident) }.to raise_error(Agis::NoAgisIDAvailable)
+    end
+
+    it "gets the id from the #id method" do
+      class Pupy
+        include Agis
+        
+        def id
+          81
+        end
+        
+        def initialize
+          agis_defm0 :ident do
+            "Oops"
+          end
+        end
+      end
+      expect(Pupy.new.agis_mailbox).to eq "AGIS TERMINAL : Pupy : 81"
+    end
   end
   
   describe "#agis_defm" do

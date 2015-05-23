@@ -197,15 +197,61 @@ describe Agis do
       expect(g.tryvar).to eq "Variable set"
     end
     
-    it "retrying raising exception, ignores it because it's ancient" do
-      g = Guffin.new
-      $redis.rpush g.agis_mailbox, "m:nexceptor"
-      $redis.rpush g.agis_mailbox, "n:"
-      $redis.rpush g.agis_mailbox, "n:"
-      $redis.rpush g.agis_mailbox, "n:"
-      $redis.rpush g.agis_mailbox, "r:whatever this is a dud return"
-      g.agis_call($redis, :setvar, "trial")
-      expect(g.tryvar).to eq "trial"
+    it "keeps the method call in the box after exception" do
+      class Pepy
+        include Agis
+        
+        def agis_id; "any"; end
+        
+        def exceptor
+          raise StandardError
+        end
+        
+        def identer
+          "Pepsi"
+        end
+        
+        def initialize
+          agis_defm0 :exceptor
+          agis_defm0 :identer
+        end
+      end
+      
+      ppy = Pepy.new
+      expect {ppy.agis_call($redis, :exceptor)}.to raise_error(Agis::AgisRetryAttemptsExceeded)
+      expect {ppy.agis_call($redis, :identer)}.to raise_error(Agis::AgisRetryAttemptsExceeded)
+    end
+    
+    it "actually assures thread-safety" do
+      class Trier
+        include Agis
+        def agis_id; "same"; end
+        
+        def upcount
+          @counter = (@counter or 0) + 1
+          @counter
+        end
+        
+        def initialize
+          agis_defm0 :upcount
+        end
+      end
+      
+      shared_trier = Trier.new
+      puts (@agis_locktimeout or 4)
+      t1 = Thread.new {
+        500.times do
+          puts "Thread 1 Trier counter: " + shared_trier.agis_call($redis, :upcount).to_s
+        end
+      }
+      t2 = Thread.new {
+        500.times do
+          puts "Thread 2 Trier counter: " + shared_trier.agis_call($redis, :upcount).to_s
+        end
+      }
+      t1.join
+      t2.join
+      expect(shared_trier.agis_call($redis, :upcount)).to eq 1001
     end
   end
   

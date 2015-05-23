@@ -203,7 +203,7 @@ module Agis
   # Push a call and ncrunch immediately
   # this returns the last return value from the queue
   def agis_call(redis, name, arg1=nil, arg2=nil, arg3=nil)
-    redis.lock(self.agis_mailbox + ".LOCK", life: (@agis_locktimeout or 4), acquire: 5) do |lock|
+    redis.lock(self.agis_mailbox + ".LOCK", life: (@agis_locktimeout or 4), acquire: 8) do |lock|
       @agis_methods[name][1].call(redis, arg1, arg2, arg3)
       until_sig = Time.now.to_s + ":" + Process.pid.to_s + Random.new.rand(4000000000).to_s
       redis.rpush self.agis_mailbox, "r:" + until_sig

@@ -16,6 +16,9 @@ module Agis
   class NoAgisIDAvailable < StandardError
   end
   
+  class RedisLockExpired < StandardError
+  end
+  
   def initialize
     @agis_methods = Hash.new
   end
@@ -129,16 +132,14 @@ module Agis
     # return 0
     agis_last = nil
     
-    retryattempts = 0
-    
     loop do
       args = redis.lrange(self.agis_mailbox, 0, 4)
-      mni = args[0]
+      mni  = args[0]
       return agis_last unless mni
       if(mni and mni[0..1] == "m:")
-        mn = mni[2..-1]
-        mc = @agis_methods[mn.to_sym][0]
-        meti = @agis_methods[mn.to_sym][1]
+        mn        = mni[2..-1]
+        mc        = @agis_methods[mn.to_sym][0]
+        meti      = @agis_methods[mn.to_sym][1]
         until_sig = "r:" + usig
         case meti
         when Proc
@@ -150,6 +151,7 @@ module Agis
         end
         
         begin
+          # raise Agis::RedisLockExpired if lock.stale_key?
           case mc
           when 0
             agis_last = met.call()
@@ -167,13 +169,12 @@ module Agis
             redis.lpop self.agis_mailbox
             redis.lpop self.agis_mailbox
           end
-          # lock.extend_life 4
-          mn = nil
           return agis_last if args[4] == until_sig
         rescue => e
           puts pretty_exception(args, e)
-          retryattempts += 1
-          raise AgisRetryAttemptsExceeded if retryattempts >= (@agis_retrylimit or 1)
+          #puts "feck"
+          lock.unlock
+          raise Agis::AgisRetryAttemptsExceeded
         end
       else
         puts "AGIS error 2: Unrecognized line! Might be an orphaned thread..." + mni.to_s
@@ -183,7 +184,7 @@ module Agis
   
   # Wait until the lock is available, crunch forever
   def agis_lcrunch(redis)
-    redis.lock(self.agis_mailbox + ".LOCK", life: 5, acquire: 10) do |lock|
+    redis.lock(self.agis_mailbox + ".LOCK", life: 10, acquire: 12) do |lock|
       loop do
         _agis_crunch(lock, redis)
         #lock.extend_life (@agis_locktimeout or 4)
@@ -192,7 +193,7 @@ module Agis
   end
   
   # Get method in the format
-  # [arity, pushing method, method body]
+  # [arity, method body]
   def agis_method(name)
     @agis_methods[name]
   end
@@ -200,15 +201,15 @@ module Agis
   # Push a call and ncrunch immediately
   # this returns the last return value from the queue
   def agis_call(redis, name, arg1=nil, arg2=nil, arg3=nil)
-    redis.lock(self.agis_mailbox + ".LOCK", life: (@agis_locktimeout or 4), acquire: 8) do |lock|
-      until_sig = Time.now.to_s + ":" + Process.pid.to_s + Random.new.rand(4000000000).to_s
-      redis.multi do
-        redis.rpush self.agis_mailbox, "m:" + name.to_s
-        redis.rpush self.agis_mailbox, agis_aconv(arg1)
-        redis.rpush self.agis_mailbox, agis_aconv(arg2)
-        redis.rpush self.agis_mailbox, agis_aconv(arg3)
-        redis.rpush self.agis_mailbox, "r:" + until_sig
-      end
+    until_sig = Time.now.to_s + ":" + Process.pid.to_s + Random.new.rand(4000000000).to_s
+    redis.multi do
+      redis.rpush self.agis_mailbox, "m:" + name.to_s
+      redis.rpush self.agis_mailbox, agis_aconv(arg1)
+      redis.rpush self.agis_mailbox, agis_aconv(arg2)
+      redis.rpush self.agis_mailbox, agis_aconv(arg3)
+      redis.rpush self.agis_mailbox, "r:" + until_sig
+    end
+    redis.lock(self.agis_mailbox + ".LOCK", life: 5) do |lock|
       _agis_crunch(lock, redis, until_sig)
     end
   end

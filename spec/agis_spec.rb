@@ -227,43 +227,46 @@ describe Agis do
         include Agis
         def agis_id; "same"; end
         
-        def upcount(v)
-          @counter = v
+        def upcount
+          @counter = (@counter or 0) + 1
+          @counter
+        end
+        
+        def count
           @counter
         end
         
         def initialize
           $redis.del self.agis_mailbox
-          agis_defm1 :upcount
+          agis_defm0 :upcount
         end
       end
       
       shared_trier = Trier.new
-      puts (@agis_locktimeout or 4)
       
       t1 = Thread.new {
-        5.times do |i|
+        5000.times do
           begin
-            a = shared_trier.agis_call($redis, :upcount, i).to_s
-            puts "Thread 1 Trier counter: " + a
+            a = shared_trier.agis_call($redis, :upcount).to_s
+            #puts "Thread 1 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded
-            puts "meh"
+            puts "meh 1 " + shared_trier.count.to_s
           end
         end
       }
       t2 = Thread.new {
-        5.times do |i|
+        5000.times do
           begin
-            a = shared_trier.agis_call($redis, :upcount, i).to_s
-            puts "Thread 2 Trier counter: " + a
+            a = shared_trier.agis_call($redis, :upcount).to_s
+            #puts "Thread 2 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded
-            puts "meh"
+            puts "meh 2 " + shared_trier.count.to_s
           end
         end
       }
       t1.join
       t2.join
-      expect(nil).to eq nil
+      expect(shared_trier.agis_call($redis, :upcount)).to eq 10001
     end
   end
   

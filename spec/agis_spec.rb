@@ -21,6 +21,7 @@ class Guffin < Object
   
   def initialize
     stopvar = 0
+    @agis_debugmode = true
     
     agis_defm0 :ident do
       "Hello"
@@ -237,6 +238,7 @@ describe Agis do
         end
         
         def initialize
+          @agis_debugmode = true
           $redis.del self.agis_mailbox
           agis_defm0 :upcount
         end
@@ -245,10 +247,10 @@ describe Agis do
       shared_trier = Trier.new
       
       t1 = Thread.new {
-        25000.times do
+        2222.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
-            #puts "Thread 1 Trier counter: " + a
+            puts "Thread 1 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded => e
             puts e
             puts "meh 1 " + shared_trier.count.to_s
@@ -256,10 +258,10 @@ describe Agis do
         end
       }
       t2 = Thread.new {
-        25000.times do
+        2222.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
-            #puts "Thread 2 Trier counter: " + a
+            puts "Thread 2 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded => e
             puts e
             puts "meh 2 " + shared_trier.count.to_s
@@ -267,10 +269,10 @@ describe Agis do
         end
       }
       t3 = Thread.new {
-        25000.times do
+        2222.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
-            #puts "Thread 2 Trier counter: " + a
+            puts "Thread 3 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded => e
             puts e
             puts "meh 3 " + shared_trier.count.to_s
@@ -278,10 +280,10 @@ describe Agis do
         end
       }
       t4 = Thread.new {
-        25000.times do
+        2222.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
-            #puts "Thread 2 Trier counter: " + a
+            puts "Thread 4 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded => e
             puts e
             puts "meh 4 " + shared_trier.count.to_s
@@ -292,8 +294,8 @@ describe Agis do
       t2.join
       t3.join
       t4.join
-      puts "Final result: " + shared_trier.count.to_s + " out of 100001"
-      expect(shared_trier.agis_call($redis, :upcount) > 100001).to eq true
+      puts "Final result: " + shared_trier.count.to_s + " out of 8888"
+      expect(shared_trier.agis_call($redis, :upcount) == 8889).to eq true
     end
   end
   

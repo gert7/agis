@@ -125,7 +125,17 @@ module Agis
     end
   end
   
-  def _agis_crunch(lock, redis, usig)
+  def popfive(redis)
+    redis.multi do
+      redis.lpop self.agis_mailbox
+      redis.lpop self.agis_mailbox
+      redis.lpop self.agis_mailbox
+      redis.lpop self.agis_mailbox
+      redis.lpop self.agis_mailbox
+    end
+  end
+  
+  def _agis_crunch(redis, usig)
     # loop do
     #  a = redis.lpop(self.agis_mailbox)
     #  a ? puts a : break
@@ -133,62 +143,62 @@ module Agis
     # return 0
     agis_last = nil
     
-    loop do
-      args = redis.lrange(self.agis_mailbox, 0, 4)
-      mni  = args[0]
-      return agis_last unless mni
-      if(mni and mni[0..1] == "m:")
-        mn        = mni[2..-1]
-        mc        = @agis_methods[mn.to_sym][0]
-        meti      = @agis_methods[mn.to_sym][1]
-        until_sig = "r:" + usig
-        case meti
-        when Proc
-          met = meti
-        when Symbol
-          met = self.method(meti)
-        when NilClass
-          met = self.method(mn.to_sym) # when proc is Nil, call the class methods all the same
-        end
-        
-        begin
-          raise Agis::RedisLockExpired if lock.stale_key?
-          case mc
-          when 0
-            agis_last = met.call()
-          when 1
-            agis_last = met.call(agis_fconv(args[1]))
-          when 2
-            agis_last = met.call(agis_fconv(args[1]), agis_fconv(args[2]))
-          when 3
-            agis_last = met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3]))
+    redis.lock(self.agis_mailbox + ".LOCK", life: 5) do |lock|
+      loop do
+        mayb = redis.hget self.agis_mailbox + ".RETN", usig
+        return agis_fconv(mayb) if mayb
+        args = redis.lrange(self.agis_mailbox, 0, 4)
+        mni  = args[0]
+        return agis_last unless mni
+        if(mni and mni[0..1] == "m:")
+          if redis.hget self.agis_mailbox + ".RETN", args[4][2..-1]
+            popfive redis
+            next
           end
-          redis.multi do
-            redis.lpop self.agis_mailbox
-            redis.lpop self.agis_mailbox
-            redis.lpop self.agis_mailbox
-            redis.lpop self.agis_mailbox
-            redis.lpop self.agis_mailbox
+          mn        = mni[2..-1]
+          mc        = @agis_methods[mn.to_sym][0]
+          meti      = @agis_methods[mn.to_sym][1]
+          until_sig = "r:" + usig
+          case meti
+          when Proc
+            met = meti
+          when Symbol
+            met = self.method(meti)
+          when NilClass
+            met = self.method(mn.to_sym) # when proc is Nil, call the class methods all the same
           end
-          return agis_last if args[4] == until_sig
-        rescue => e
-          #puts "feck"
-          lock.unlock
-          raise Agis::AgisRetryAttemptsExceeded, pretty_exception(args, e)
+          
+          begin
+            raise Agis::RedisLockExpired if lock.stale_key?
+            case mc
+            when 0
+              redis.hset self.agis_mailbox + ".RETN", usig, agis_aconv(met.call())
+            when 1
+              redis.hset self.agis_mailbox + ".RETN", usig, agis_aconv(met.call(agis_fconv(args[1])))
+            when 2
+              redis.hset self.agis_mailbox + ".RETN", usig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2])))
+            when 3
+              redis.hset self.agis_mailbox + ".RETN", usig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3])))
+            end
+          rescue Agis::RedisLockExpired => e
+            puts "Agis lock expired for " + args.to_s if (@agis_debugmode == true)
+          rescue => e
+            #puts "feck"
+            lock.unlock
+            raise Agis::AgisRetryAttemptsExceeded, pretty_exception(args, e)
+          end
+        else
+          puts "AGIS error 2: Unrecognized line! Might be an orphaned thread..." + mni.to_s
         end
-      else
-        puts "AGIS error 2: Unrecognized line! Might be an orphaned thread..." + mni.to_s
       end
     end
   end
   
   # Wait until the lock is available, crunch forever
   def agis_lcrunch(redis)
-    redis.lock(self.agis_mailbox + ".LOCK", life: 10, acquire: 12) do |lock|
-      loop do
-        _agis_crunch(lock, redis)
-        #lock.extend_life (@agis_locktimeout or 4)
-      end
+    loop do
+      _agis_crunch(lock, redis)
+      #lock.extend_life (@agis_locktimeout or 4)
     end
   end
   
@@ -209,9 +219,7 @@ module Agis
       redis.rpush self.agis_mailbox, agis_aconv(arg3)
       redis.rpush self.agis_mailbox, "r:" + until_sig
     end
-    redis.lock(self.agis_mailbox + ".LOCK", life: 5) do |lock|
-      _agis_crunch(lock, redis, until_sig)
-    end
+    _agis_crunch(redis, until_sig)
   end
   
   # Alias for agis_call

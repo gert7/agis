@@ -214,6 +214,11 @@ module Agis
     end
   end
   
+  # Alias for agis_call
+  def acall(redis, name, arg1=nil, arg2=nil, arg3=nil)
+    agis_call(redis, name, arg1, arg2, arg3)
+  end
+  
   # Method for calling another Agis method, or retrying.
   # this doesn't touch the message box because it should
   # only be called inside an Agis method, where the box

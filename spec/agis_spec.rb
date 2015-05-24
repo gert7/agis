@@ -245,28 +245,31 @@ describe Agis do
       shared_trier = Trier.new
       
       t1 = Thread.new {
-        5000.times do
+        50000.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
             #puts "Thread 1 Trier counter: " + a
-          rescue Agis::AgisRetryAttemptsExceeded
+          rescue Agis::AgisRetryAttemptsExceeded => e
+            puts e
             puts "meh 1 " + shared_trier.count.to_s
           end
         end
       }
       t2 = Thread.new {
-        5000.times do
+        50000.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
             #puts "Thread 2 Trier counter: " + a
-          rescue Agis::AgisRetryAttemptsExceeded
+          rescue Agis::AgisRetryAttemptsExceeded => e
+            puts e
             puts "meh 2 " + shared_trier.count.to_s
           end
         end
       }
       t1.join
       t2.join
-      expect(shared_trier.agis_call($redis, :upcount)).to eq 10001
+      puts "Final result: " + shared_trier.count.to_s + " out of 100001"
+      expect(shared_trier.agis_call($redis, :upcount) > 100001).to eq true
     end
   end
   

@@ -119,6 +119,7 @@ module Agis
   
   def pretty_exception(args, e)
     puts "Agis method call failed: " + args.to_s
+    puts "  " + e.class.to_s
     e.backtrace.each do |v|
       puts v.to_s
     end
@@ -151,7 +152,7 @@ module Agis
         end
         
         begin
-          # raise Agis::RedisLockExpired if lock.stale_key?
+          raise Agis::RedisLockExpired if lock.stale_key?
           case mc
           when 0
             agis_last = met.call()
@@ -171,10 +172,9 @@ module Agis
           end
           return agis_last if args[4] == until_sig
         rescue => e
-          puts pretty_exception(args, e)
           #puts "feck"
           lock.unlock
-          raise Agis::AgisRetryAttemptsExceeded
+          raise Agis::AgisRetryAttemptsExceeded, pretty_exception(args, e)
         end
       else
         puts "AGIS error 2: Unrecognized line! Might be an orphaned thread..." + mni.to_s

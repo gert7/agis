@@ -4,7 +4,7 @@ Agis
 [![Gem Version](https://badge.fury.io/rb/agis.svg)](http://badge.fury.io/rb/agis)
 [![Build Status](https://travis-ci.org/gert7/agis.svg)](https://travis-ci.org/gert7/agis)
 
-
+Both parameters and return values are stored as simple Redis strings and will not be marshalled.
 
 Installation
 ------------
@@ -79,17 +79,17 @@ Retrying
 
 Agis allows retrying with agis_recall(), which accepts the same parameters as agis_call(). It doesn't tackle the message box, since it's already locked when called in an Agis method. This does nothing but call the given method among the agis_methods.
 
-Agis doesn't remove any call from the message box that crashes or raises an exception. Instead it will retry it each time. A single agis_call will retry the failed call or raises an AgisRetryAttemptsExceeded error. As a result, you must write methods which:
+Agis doesn't remove any call from the message box that crashes or raises an exception. Instead it will retry it each time. A single agis_call will retry the failed call once, after that it raises an AgisRetryAttemptsExceeded error. As a result, you must write methods which:
 
 - Assume they will be retried several times
 - Will be retried if they raise an exception that isn't handled in the method itself
 
 However, these restrictions are balanced by the following guarantees :
 
-- Methods will be retried until they succeed
+- Methods will be retried as many times as needed until they succeed
 - Methods called through the same message box (classname + Object#agis_id) are guaranteed to run in a single thread, in sequence
 
-The message box will effectively not move forward until the method call returns.
+The message box will effectively not move forward until the method call returns. Provided your method doesn't raise an exception or crash, it's guaranteed to run exactly as many times as it is called.
 
 Instance variables
 ------------------

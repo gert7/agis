@@ -89,32 +89,32 @@ module Agis
   end
   
   # create a method with no parameters
-  def agis_defm0(name, &b)
+  def agis_defm0(name, timeout=nil, &b)
     @agis_methods ||= Hash.new
     @agis_methods[name] = [0, b]
   end
   
   # create a method with one parameter
-  def agis_defm1(name, &b)
+  def agis_defm1(name, timeout=nil, &b)
     @agis_methods ||= Hash.new
     @agis_methods[name] = [1, b]
   end
   
   # create a method with two parameters
-  def agis_defm2(name, &b)
+  def agis_defm2(name, timeout=nil, &b)
     @agis_methods ||= Hash.new
     @agis_methods[name] = [2, b]
   end
   
   # create a method with three parameters
-  def agis_defm3(name, &b)
+  def agis_defm3(name, timeout=nil, &b)
     @agis_methods ||= Hash.new
     @agis_methods[name] = [3, b]
   end
   
   # alias for agis_defm3
-  def agis_def(name, &b)
-    agis_defm3(name, b)
+  def agis_def(name, timeout=nil, &b)
+    agis_defm3(name, timeout, b)
   end
   
   def pretty_exception(args, e)
@@ -135,6 +135,14 @@ module Agis
     end
   end
   
+  def agis_boxlock
+    self.agis_mailbox + ".LOCK"
+  end
+  
+  def agis_returnbox
+    self.agis_mailbox + ".RETN"
+  end
+  
   def _agis_crunch(redis, usig)
     # loop do
     #  a = redis.lpop(self.agis_mailbox)
@@ -143,15 +151,18 @@ module Agis
     # return 0
     agis_last = nil
     
-    redis.lock(self.agis_mailbox + ".LOCK", life: 5) do |lock|
+    redis.lock(self.agis_boxlock, life: 5) do |lock|
       loop do
-        mayb = redis.hget self.agis_mailbox + ".RETN", usig
-        return agis_fconv(mayb) if mayb
+        mayb = redis.hget self.agis_returnbox, usig
+        if mayb
+          redis.hdel self.agis_returnbox, usig
+          return agis_fconv(mayb)
+        end
         args = redis.lrange(self.agis_mailbox, 0, 4)
         mni  = args[0]
         return agis_last unless mni
         if(mni and mni[0..1] == "m:")
-          if redis.hget self.agis_mailbox + ".RETN", args[4][2..-1]
+          if redis.hget self.agis_returnbox, args[4][2..-1]
             popfive redis
             next
           end
@@ -172,13 +183,13 @@ module Agis
             raise Agis::RedisLockExpired if lock.stale_key?
             case mc
             when 0
-              redis.hset self.agis_mailbox + ".RETN", usig, agis_aconv(met.call())
+              redis.hset self.agis_returnbox, usig, agis_aconv(met.call())
             when 1
-              redis.hset self.agis_mailbox + ".RETN", usig, agis_aconv(met.call(agis_fconv(args[1])))
+              redis.hset self.agis_returnbox, usig, agis_aconv(met.call(agis_fconv(args[1])))
             when 2
-              redis.hset self.agis_mailbox + ".RETN", usig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2])))
+              redis.hset self.agis_returnbox, usig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2])))
             when 3
-              redis.hset self.agis_mailbox + ".RETN", usig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3])))
+              redis.hset self.agis_returnbox, usig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3])))
             end
           rescue Agis::RedisLockExpired => e
             puts "Agis lock expired for " + args.to_s if (@agis_debugmode == true)

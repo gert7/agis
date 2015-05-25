@@ -250,7 +250,7 @@ describe Agis do
         2222.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
-            puts "Thread 1 Trier counter: " + a
+            #puts "Thread 1 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded => e
             puts e
             puts "meh 1 " + shared_trier.count.to_s
@@ -261,7 +261,7 @@ describe Agis do
         2222.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
-            puts "Thread 2 Trier counter: " + a
+            #puts "Thread 2 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded => e
             puts e
             puts "meh 2 " + shared_trier.count.to_s
@@ -272,7 +272,7 @@ describe Agis do
         2222.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
-            puts "Thread 3 Trier counter: " + a
+            #puts "Thread 3 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded => e
             puts e
             puts "meh 3 " + shared_trier.count.to_s
@@ -283,7 +283,7 @@ describe Agis do
         2222.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
-            puts "Thread 4 Trier counter: " + a
+            #puts "Thread 4 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded => e
             puts e
             puts "meh 4 " + shared_trier.count.to_s

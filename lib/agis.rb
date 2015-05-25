@@ -181,6 +181,11 @@ module Agis
           
           begin
             raise Agis::RedisLockExpired if lock.stale_key?
+            begin
+              lock.extend_life (@agis_methods[mn.to_sym][2] or 5)
+            rescue Redis::Lock::LockNotAcquired
+              raise Agis::RedisLockExpired
+            end
             case mc
             when 0
               redis.hset self.agis_returnbox, usig, agis_aconv(met.call())

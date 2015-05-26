@@ -250,7 +250,7 @@ describe Agis do
         2222.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
-            #puts "Thread 1 Trier counter: " + a
+            puts "Thread 1 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded => e
             puts e
             puts "meh 1 " + shared_trier.count.to_s
@@ -261,7 +261,7 @@ describe Agis do
         2222.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
-            #puts "Thread 2 Trier counter: " + a
+            puts "Thread 2 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded => e
             puts e
             puts "meh 2 " + shared_trier.count.to_s
@@ -272,7 +272,7 @@ describe Agis do
         2222.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
-            #puts "Thread 3 Trier counter: " + a
+            puts "Thread 3 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded => e
             puts e
             puts "meh 3 " + shared_trier.count.to_s
@@ -283,7 +283,7 @@ describe Agis do
         2222.times do
           begin
             a = shared_trier.agis_call($redis, :upcount).to_s
-            #puts "Thread 4 Trier counter: " + a
+            puts "Thread 4 Trier counter: " + a
           rescue Agis::AgisRetryAttemptsExceeded => e
             puts e
             puts "meh 4 " + shared_trier.count.to_s
@@ -296,6 +296,45 @@ describe Agis do
       t4.join
       puts "Final result: " + shared_trier.count.to_s + " out of 8888"
       expect(shared_trier.agis_call($redis, :upcount) == 8889).to eq true
+    end
+    
+    it "allows an actor to call another actor" do
+      class User
+        include Agis
+        attr_accessor :id
+
+        def reserve(v)
+          $redis.set "USER" + self.id.to_s, v
+        end
+        
+        def reservation
+          $redis.get "USER" + self.id.to_s
+        end
+        
+        def initialize(id)
+          agis_defm1 :reserve
+          self.id = id
+        end
+      end
+      
+      class Room
+        include Agis
+        
+        def id; 3; end
+        
+        def addplayer(id)
+          ply = User.new(id)
+          ply.agis_call($redis, :reserve, "ROOM = " + self.id.to_s)
+        end
+        
+        def initialize
+          agis_defm1 :addplayer
+        end
+      end
+      
+      r = Room.new
+      r.agis_call($redis, :addplayer, 41)
+      expect(User.new(41).reservation).to eq "ROOM = 3"
     end
   end
   

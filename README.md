@@ -4,7 +4,21 @@ Agis
 [![Gem Version](https://badge.fury.io/rb/agis.svg)](http://badge.fury.io/rb/agis)
 [![Build Status](https://travis-ci.org/gert7/agis.svg)](https://travis-ci.org/gert7/agis)
 
-Both parameters and return values are stored as simple Redis strings and will not be marshalled.
+A Redis-based stateless Actor library designed with ActiveRecord in mind. Built on deferred retrying, message boxes are only executed when a method is called.
+
+Both parameters and return values are stored as JSON entities. Actor calls are retried until they return without failure.
+
+Features
+--------
+
+- Limited class mixin - methods for actors are explicitly selected with agis_defm
+- Actors are procedures, not processes - they run in the same thread
+- Redis-based data structures (redis lock; message and return boxes)
+- Deferred retrying of failed calls
+- Method calls are only removed from a message box when they return a value
+- Message box renaming with agis_id for more specific data models
+- Method-specific custom timeouts for lock expiry
+- Not many other features - very simple!
 
 Installation
 ------------

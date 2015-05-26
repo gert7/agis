@@ -17,3 +17,12 @@
 
 - Fixed a deadly mailbox failure
 
+0.2
+
+- Introduced return box for return value fidelity
+
+0.2.1
+
+- Added timeout parameter
+- Retry the lock if it expires and we don't have a result yet
+

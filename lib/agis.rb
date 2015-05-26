@@ -19,6 +19,9 @@ module Agis
   class RedisLockExpired < StandardError
   end
   
+  class MessageBoxEmpty < StandardError
+  end
+  
   def initialize
     @agis_methods = Hash.new
   end
@@ -91,25 +94,25 @@ module Agis
   # create a method with no parameters
   def agis_defm0(name, timeout=nil, &b)
     @agis_methods ||= Hash.new
-    @agis_methods[name] = [0, b]
+    @agis_methods[name] = [0, b, timeout]
   end
   
   # create a method with one parameter
   def agis_defm1(name, timeout=nil, &b)
     @agis_methods ||= Hash.new
-    @agis_methods[name] = [1, b]
+    @agis_methods[name] = [1, b, timeout]
   end
   
   # create a method with two parameters
   def agis_defm2(name, timeout=nil, &b)
     @agis_methods ||= Hash.new
-    @agis_methods[name] = [2, b]
+    @agis_methods[name] = [2, b, timeout]
   end
   
   # create a method with three parameters
   def agis_defm3(name, timeout=nil, &b)
     @agis_methods ||= Hash.new
-    @agis_methods[name] = [3, b]
+    @agis_methods[name] = [3, b, timeout]
   end
   
   # alias for agis_defm3
@@ -143,78 +146,86 @@ module Agis
     self.agis_mailbox + ".RETN"
   end
   
-  def _agis_crunch(redis, usig)
-    # loop do
-    #  a = redis.lpop(self.agis_mailbox)
-    #  a ? puts a : break
-    # end
-    # return 0
-    agis_last = nil
-    
-    redis.lock(self.agis_boxlock, life: 5) do |lock|
-      loop do
-        mayb = redis.hget self.agis_returnbox, usig
-        if mayb
-          redis.hdel self.agis_returnbox, usig
-          return agis_fconv(mayb)
-        end
-        args = redis.lrange(self.agis_mailbox, 0, 4)
-        mni  = args[0]
-        return agis_last unless mni
-        if(mni and mni[0..1] == "m:")
-          if redis.hget self.agis_returnbox, args[4][2..-1]
-            popfive redis
-            next
-          end
-          mn        = mni[2..-1]
-          mc        = @agis_methods[mn.to_sym][0]
-          meti      = @agis_methods[mn.to_sym][1]
-          until_sig = "r:" + usig
-          case meti
-          when Proc
-            met = meti
-          when Symbol
-            met = self.method(meti)
-          when NilClass
-            met = self.method(mn.to_sym) # when proc is Nil, call the class methods all the same
-          end
-          
-          begin
-            raise Agis::RedisLockExpired if lock.stale_key?
-            begin
-              lock.extend_life (@agis_methods[mn.to_sym][2] or 5)
-            rescue Redis::Lock::LockNotAcquired
-              raise Agis::RedisLockExpired
-            end
-            case mc
-            when 0
-              redis.hset self.agis_returnbox, usig, agis_aconv(met.call())
-            when 1
-              redis.hset self.agis_returnbox, usig, agis_aconv(met.call(agis_fconv(args[1])))
-            when 2
-              redis.hset self.agis_returnbox, usig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2])))
-            when 3
-              redis.hset self.agis_returnbox, usig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3])))
-            end
-          rescue Agis::RedisLockExpired => e
-            puts "Agis lock expired for " + args.to_s if (@agis_debugmode == true)
-          rescue => e
-            #puts "feck"
-            lock.unlock
-            raise Agis::AgisRetryAttemptsExceeded, pretty_exception(args, e)
-          end
-        else
-          puts "AGIS error 2: Unrecognized line! Might be an orphaned thread..." + mni.to_s
-        end
+  def agis_chew(redis, usig, lock)
+    args = redis.lrange(self.agis_mailbox, 0, 4)
+    mni  = args[0]
+    if(mni and mni[0..1] == "m:")
+      # don't do any signatures twice ever
+      if redis.hget self.agis_returnbox, args[4][2..-1]
+        popfive redis
+        return nil
       end
+      mn        = mni[2..-1]
+      mc        = @agis_methods[mn.to_sym][0]
+      meti      = @agis_methods[mn.to_sym][1]
+      until_sig = "r:" + usig
+      case meti
+      when Proc
+        met = meti
+      when Symbol
+        met = self.method(meti)
+      when NilClass
+        met = self.method(mn.to_sym) # when proc is Nil, call the class methods all the same
+      end
+      
+      begin
+        raise Agis::RedisLockExpired if lock.stale_key?
+        begin
+          lock.extend_life (@agis_methods[mn.to_sym][2] or 5)
+        rescue Redis::Lock::LockNotAcquired
+          raise Agis::RedisLockExpired
+        end
+        case mc
+        when 0
+          redis.hset self.agis_returnbox, usig, agis_aconv(met.call())
+        when 1
+          redis.hset self.agis_returnbox, usig, agis_aconv(met.call(agis_fconv(args[1])))
+        when 2
+          redis.hset self.agis_returnbox, usig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2])))
+        when 3
+          redis.hset self.agis_returnbox, usig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3])))
+        end
+        return :next
+      rescue Agis::RedisLockExpired => e
+        puts "Agis lock expired for " + args.to_s if (@agis_debugmode == true)
+        return :relock
+      rescue => e
+        #puts "feck"
+        lock.unlock
+        raise Agis::AgisRetryAttemptsExceeded, pretty_exception(args, e)
+      end
+    elsif not mni
+      return :empty
+    else
+      puts "AGIS error: Unrecognized line!" + mni.to_s
     end
   end
   
-  # Wait until the lock is available, crunch forever
-  def agis_lcrunch(redis)
+  def try_usig(redis, usig)
+    mayb = redis.hget self.agis_returnbox, usig
+    if mayb
+      redis.hdel self.agis_returnbox, usig
+      return mayb
+    else
+      return nil
+    end
+  end
+  
+  def _agis_crunch(redis, usig)
     loop do
-      _agis_crunch(lock, redis)
-      #lock.extend_life (@agis_locktimeout or 4)
+      redis.lock(self.agis_boxlock, life: 5) do |lock|
+        loop do
+          a = agis_chew(redis, usig, lock)
+          u = try_usig(redis, usig)
+          return agis_fconv(u) if u
+          break if a == :relock
+          if a == :empty
+            u = try_usig(redis, usig)
+            raise Agis::MessageBoxEmpty unless u
+            return agis_fconv(u)
+          end
+        end
+      end
     end
   end
   

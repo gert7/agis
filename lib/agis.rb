@@ -45,9 +45,9 @@ module Agis
     when Integer
       a = "i:" + v.to_s
     when Hash
-      a = "h:" + v.to_json
+      a = "h:" + v.to_json.to_s
     when Array
-      a = "a:" + v.to_json
+      a = "a:" + v.to_json.to_s
     when Float
       a = "d:" + v.to_s
     when TrueClass
@@ -57,7 +57,7 @@ module Agis
     when NilClass
       a = "n:"
     else
-      a = "h:" + v.to_json
+      a = "h:" + v.to_json.to_s
     end
     return a
   end
@@ -115,11 +115,13 @@ module Agis
   end
   
   def pretty_exception(args, e)
-    puts "Agis method call failed: " + args.to_s
-    puts "  " + e.class.to_s
+    ret = []
+    ret << "Agis method call failed: " + args.to_s
+    ret << "  " + e.class.to_s
     e.backtrace.each do |v|
-      puts v.to_s
+      ret << v.to_s
     end
+    ret
   end
   
   def popfive(redis)
@@ -179,6 +181,7 @@ module Agis
         when 3
           redis.hset self.agis_returnbox, usig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3])))
         end
+        popfive redis
         return :next
       rescue Agis::RedisLockExpired => e
         puts "Agis lock expired for " + args.to_s if (@agis_debugmode == true)
@@ -186,7 +189,7 @@ module Agis
       rescue => e
         #puts "feck"
         lock.unlock
-        raise Agis::AgisRetryAttemptsExceeded, pretty_exception(args, e)
+        raise e
       end
     elsif not mni
       return :empty

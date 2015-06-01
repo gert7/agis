@@ -3,8 +3,6 @@ module Agis
   require 'redis-lock'
   require 'json'
   
-  attr_accessor :agis_methods
-  
   # called whenever a parameter in the queue is of type method
   # this is unusual behavior
   class MethodCallInParameters < StandardError
@@ -20,10 +18,6 @@ module Agis
   end
   
   class MessageBoxEmpty < StandardError
-  end
-  
-  def initialize
-    @agis_methods = Hash.new
   end
 
   # the name of the key used for the Agis message box in Redis
@@ -201,7 +195,7 @@ module Agis
     end
   end
   
-  def try_usig(redis, usig)
+  def agis_try_usig(redis, usig)
     mayb = redis.hget self.agis_returnbox, usig
     if mayb
       redis.hdel self.agis_returnbox, usig
@@ -216,11 +210,11 @@ module Agis
       redis.lock(self.agis_boxlock, life: 5) do |lock|
         loop do
           a = agis_chew(redis, usig, lock)
-          u = try_usig(redis, usig)
+          u = agis_try_usig(redis, usig)
           return agis_fconv(u) if u
           break if a == :relock
           if a == :empty
-            u = try_usig(redis, usig)
+            u = agis_try_usig(redis, usig)
             raise Agis::MessageBoxEmpty unless u
             return agis_fconv(u)
           end

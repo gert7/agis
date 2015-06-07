@@ -142,19 +142,19 @@ module Agis
     self.agis_mailbox + ".RETN"
   end
   
-  def agis_chew(redis, usig, lock)
+  def agis_chew(redis, lock)
     args = redis.lrange(self.agis_mailbox, 0, 4)
     mni  = args[0]
     if(mni and mni[0..1] == "m:")
       # don't do any signatures twice ever
-      if redis.hget self.agis_returnbox, args[4][2..-1]
+      lusig = args[4][2..-1]
+      if redis.hget self.agis_returnbox, lusig
         popfive redis
         return nil
       end
       mn        = mni[2..-1]
       mc        = @agis_methods[mn.to_sym][0]
       meti      = @agis_methods[mn.to_sym][1]
-      until_sig = "r:" + usig
       case meti
       when Proc
         met = meti
@@ -173,13 +173,13 @@ module Agis
         end
         case mc
         when 0
-          redis.hset self.agis_returnbox, usig, agis_aconv(met.call())
+          redis.hset self.agis_returnbox, lusig, agis_aconv(met.call())
         when 1
-          redis.hset self.agis_returnbox, usig, agis_aconv(met.call(agis_fconv(args[1])))
+          redis.hset self.agis_returnbox, lusig, agis_aconv(met.call(agis_fconv(args[1])))
         when 2
-          redis.hset self.agis_returnbox, usig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2])))
+          redis.hset self.agis_returnbox, lusig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2])))
         when 3
-          redis.hset self.agis_returnbox, usig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3])))
+          redis.hset self.agis_returnbox, lusig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3])))
         end
         popfive redis
         return :next
@@ -212,7 +212,7 @@ module Agis
     loop do
       redis.lock(self.agis_boxlock, life: 5) do |lock|
         loop do
-          a = agis_chew(redis, usig, lock)
+          a = agis_chew(redis, lock)
           u = agis_try_usig(redis, usig)
           return agis_fconv(u) if u
           break if a == :relock

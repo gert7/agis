@@ -148,6 +148,7 @@ module Agis
     if(mni and mni[0..1] == "m:")
       # don't do any signatures twice ever
       lusig = args[4][2..-1]
+      #puts lusig
       if redis.hget self.agis_returnbox, lusig
         popfive redis
         return nil
@@ -165,26 +166,30 @@ module Agis
       end
       
       begin
-        raise Agis::RedisLockExpired if lock.stale_key?
-        begin
-          lock.extend_life (@agis_methods[mn.to_sym][2] or 5)
-        rescue Redis::Lock::LockNotAcquired
-          raise Agis::RedisLockExpired
-        end
+        #raise Agis::RedisLockExpired if lock.stale_key?
+        #begin
+        #  lock.extend_life (@agis_methods[mn.to_sym][2] or 5)
+        #rescue Redis::Lock::LockNotAcquired
+        #  raise Agis::RedisLockExpired
+        #end
         case mc
         when 0
-          redis.hset self.agis_returnbox, lusig, agis_aconv(met.call())
+          ret = agis_aconv(met.call())
         when 1
-          redis.hset self.agis_returnbox, lusig, agis_aconv(met.call(agis_fconv(args[1])))
+          ret = agis_aconv(met.call(agis_fconv(args[1])))
         when 2
-          redis.hset self.agis_returnbox, lusig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2])))
+          ret = agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2])))
         when 3
-          redis.hset self.agis_returnbox, lusig, agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3])))
+          ret = agis_aconv(met.call(agis_fconv(args[1]), agis_fconv(args[2]), agis_fconv(args[3])))
         end
-        popfive redis
+        redis.multi do
+          redis.hset self.agis_returnbox, lusig, ret
+          popfive redis
+        end
         return :next
       rescue Agis::RedisLockExpired => e
         puts "Agis lock expired for " + args.to_s if (@agis_debugmode == true)
+        # popfive redis
         return :relock
       rescue => e
         #puts "feck"
@@ -210,18 +215,14 @@ module Agis
   
   def _agis_crunch(redis, usig)
     loop do
-      redis.lock(self.agis_boxlock, life: 5) do |lock|
-        loop do
-          a = agis_chew(redis, lock)
-          u = agis_try_usig(redis, usig)
-          return agis_fconv(u) if u
-          break if a == :relock
-          if a == :empty
-            u = agis_try_usig(redis, usig)
-            raise Agis::MessageBoxEmpty unless u
-            return agis_fconv(u)
-          end
+      redis.lock(self.agis_boxlock, life: 10) do |lock|
+        a = agis_chew(redis, lock)
+        next if lock.stale_key?
+        u = agis_try_usig(redis, usig)
+        if a == :empty
+          raise Agis::MessageBoxEmpty unless u
         end
+        return agis_fconv(u) if u
       end
     end
   end

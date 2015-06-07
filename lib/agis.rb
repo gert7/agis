@@ -237,14 +237,19 @@ module Agis
   # this returns the last return value from the queue
   def agis_call(redis, name, arg1=nil, arg2=nil, arg3=nil)
     until_sig = Time.now.to_s + ":" + Process.pid.to_s + Random.new.rand(4000000000).to_s + Random.new.rand(4000000000).to_s
-    redis.multi do
-      redis.rpush self.agis_mailbox, "m:" + name.to_s
-      redis.rpush self.agis_mailbox, agis_aconv(arg1)
-      redis.rpush self.agis_mailbox, agis_aconv(arg2)
-      redis.rpush self.agis_mailbox, agis_aconv(arg3)
-      redis.rpush self.agis_mailbox, "r:" + until_sig
+    loop do
+      begin
+        redis.multi do
+          redis.rpush self.agis_mailbox, "m:" + name.to_s
+          redis.rpush self.agis_mailbox, agis_aconv(arg1)
+          redis.rpush self.agis_mailbox, agis_aconv(arg2)
+          redis.rpush self.agis_mailbox, agis_aconv(arg3)
+          redis.rpush self.agis_mailbox, "r:" + until_sig
+        end
+        return _agis_crunch(redis, until_sig)
+      rescue Agis::MessageBoxEmpty
+      end
     end
-    _agis_crunch(redis, until_sig)
   end
   
   # Alias for agis_call

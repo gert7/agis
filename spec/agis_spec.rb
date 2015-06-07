@@ -247,25 +247,25 @@ describe Agis do
       shared_trier = Trier.new
       
       t1 = Thread.new {
-        22222.times do
+        2222.times do
           a = shared_trier.agis_call($redis, :upcount).to_s
           #puts "Thread 1 Trier counter: " + a
         end
       }
       t2 = Thread.new {
-        22222.times do
+        2222.times do
           a = shared_trier.agis_call($redis, :upcount).to_s
           #puts "Thread 2 Trier counter: " + a
         end
       }
       t3 = Thread.new {
-        22222.times do
+        2222.times do
           a = shared_trier.agis_call($redis, :upcount).to_s
           #puts "Thread 3 Trier counter: " + a
         end
       }
       t4 = Thread.new {
-        22222.times do
+        2222.times do
           a = shared_trier.agis_call($redis, :upcount).to_s
           #puts "Thread 4 Trier counter: " + a
         end
@@ -274,8 +274,8 @@ describe Agis do
       t2.join
       t3.join
       t4.join
-      puts "Final result: " + shared_trier.count.to_s + " out of 88888"
-      expect(shared_trier.agis_call($redis, :upcount) == 88889).to eq true
+      puts "Final result: " + shared_trier.count.to_s + " out of 8888"
+      expect(shared_trier.agis_call($redis, :upcount) >= 8889).to eq true
     end
     
     it "allows an actor to call another actor" do

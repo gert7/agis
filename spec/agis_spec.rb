@@ -189,7 +189,7 @@ describe Agis do
   
   describe "#agis_call" do
     it "captures an exception and fails to finish the call" do
-      expect { Guffin.new.agis_call($redis, :exceptor) }.to raise_error(Agis::AgisRetryAttemptsExceeded)
+      expect { Guffin.new.agis_call($redis, :exceptor) }.to raise_error(StandardError)
     end
     
     it "assures the setvar probe works" do
@@ -219,8 +219,8 @@ describe Agis do
       end
       
       ppy = Pepy.new
-      expect {ppy.agis_call($redis, :exceptor)}.to raise_error(Agis::AgisRetryAttemptsExceeded)
-      expect {ppy.agis_call($redis, :identer)}.to raise_error(Agis::AgisRetryAttemptsExceeded)
+      expect {ppy.agis_call($redis, :exceptor)}.to raise_error(StandardError)
+      expect {ppy.agis_call($redis, :identer)}.to raise_error(StandardError)
     end
     
     it "actually assures thread-safety" do
@@ -248,46 +248,26 @@ describe Agis do
       
       t1 = Thread.new {
         2222.times do
-          begin
-            a = shared_trier.agis_call($redis, :upcount).to_s
-            puts "Thread 1 Trier counter: " + a
-          rescue Agis::AgisRetryAttemptsExceeded => e
-            puts e
-            puts "meh 1 " + shared_trier.count.to_s
-          end
+          a = shared_trier.agis_call($redis, :upcount).to_s
+          puts "Thread 1 Trier counter: " + a
         end
       }
       t2 = Thread.new {
         2222.times do
-          begin
-            a = shared_trier.agis_call($redis, :upcount).to_s
-            puts "Thread 2 Trier counter: " + a
-          rescue Agis::AgisRetryAttemptsExceeded => e
-            puts e
-            puts "meh 2 " + shared_trier.count.to_s
-          end
+          a = shared_trier.agis_call($redis, :upcount).to_s
+          puts "Thread 2 Trier counter: " + a
         end
       }
       t3 = Thread.new {
         2222.times do
-          begin
-            a = shared_trier.agis_call($redis, :upcount).to_s
-            puts "Thread 3 Trier counter: " + a
-          rescue Agis::AgisRetryAttemptsExceeded => e
-            puts e
-            puts "meh 3 " + shared_trier.count.to_s
-          end
+          a = shared_trier.agis_call($redis, :upcount).to_s
+          puts "Thread 3 Trier counter: " + a
         end
       }
       t4 = Thread.new {
         2222.times do
-          begin
-            a = shared_trier.agis_call($redis, :upcount).to_s
-            puts "Thread 4 Trier counter: " + a
-          rescue Agis::AgisRetryAttemptsExceeded => e
-            puts e
-            puts "meh 4 " + shared_trier.count.to_s
-          end
+          a = shared_trier.agis_call($redis, :upcount).to_s
+          puts "Thread 4 Trier counter: " + a
         end
       }
       t1.join

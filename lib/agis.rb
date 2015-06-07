@@ -235,7 +235,7 @@ module Agis
   # Push a call and ncrunch immediately
   # this returns the last return value from the queue
   def agis_call(redis, name, arg1=nil, arg2=nil, arg3=nil)
-    until_sig = Time.now.to_s + ":" + Process.pid.to_s + Random.new.rand(4000000000).to_s
+    until_sig = Time.now.to_s + ":" + Process.pid.to_s + Random.new.rand(4000000000).to_s + Random.new.rand(4000000000).to_s
     redis.multi do
       redis.rpush self.agis_mailbox, "m:" + name.to_s
       redis.rpush self.agis_mailbox, agis_aconv(arg1)

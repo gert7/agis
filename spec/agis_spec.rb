@@ -88,6 +88,10 @@ class Guffin < Object
       self.tryvar = v
     end
     
+    agis_defm0 :exonce, :once do
+      raise StandardError
+    end
+    
     agis_defm1 :exm
   end
 
@@ -185,6 +189,15 @@ describe Agis do
     it "defines a method of an actual class method" do
       expect(Guffin.new.agis_call($redis, :exm, "world")).to eq "Yes return world"
     end
+    
+    it "defines a method only to be called once" do
+      r = Guffin.new
+      begin
+        r.agis_call($redis, :exonce)
+      rescue StandardError
+      end
+      expect(r.agis_call($redis, :ident)).to eq "Hello"
+    end
   end
   
   describe "#agis_call" do
@@ -247,25 +260,25 @@ describe Agis do
       shared_trier = Trier.new
       
       t1 = Thread.new {
-        2222.times do
+        22222.times do
           a = shared_trier.agis_call($redis, :upcount).to_s
           #puts "Thread 1 Trier counter: " + a
         end
       }
       t2 = Thread.new {
-        2222.times do
+        22222.times do
           a = shared_trier.agis_call($redis, :upcount).to_s
           #puts "Thread 2 Trier counter: " + a
         end
       }
       t3 = Thread.new {
-        2222.times do
+        22222.times do
           a = shared_trier.agis_call($redis, :upcount).to_s
           #puts "Thread 3 Trier counter: " + a
         end
       }
       t4 = Thread.new {
-        2222.times do
+        22222.times do
           a = shared_trier.agis_call($redis, :upcount).to_s
           #puts "Thread 4 Trier counter: " + a
         end
@@ -274,8 +287,8 @@ describe Agis do
       t2.join
       t3.join
       t4.join
-      puts "Final result: " + shared_trier.count.to_s + " out of 8888"
-      expect(shared_trier.agis_call($redis, :upcount) >= 8889).to eq true
+      puts "Final result: " + shared_trier.count.to_s + " out of 88888"
+      expect(shared_trier.agis_call($redis, :upcount) >= 88889).to eq true
     end
     
     it "allows an actor to call another actor" do

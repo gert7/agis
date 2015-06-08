@@ -86,31 +86,31 @@ module Agis
   end
   
   # create a method with no parameters
-  def agis_defm0(name, timeout=nil, &b)
+  def agis_defm0(name, mode=:retry, timeout=nil, &b)
     @agis_methods ||= Hash.new
-    @agis_methods[name] = [0, b, timeout]
+    @agis_methods[name] = {arity: 0, method: b, mode: mode, timeout: timeout}
   end
   
   # create a method with one parameter
-  def agis_defm1(name, timeout=nil, &b)
+  def agis_defm1(name, mode=:retry, timeout=nil, &b)
     @agis_methods ||= Hash.new
-    @agis_methods[name] = [1, b, timeout]
+    @agis_methods[name] = {arity: 1, method: b, mode: mode, timeout: timeout}
   end
   
   # create a method with two parameters
-  def agis_defm2(name, timeout=nil, &b)
+  def agis_defm2(name, mode=:retry, timeout=nil, &b)
     @agis_methods ||= Hash.new
-    @agis_methods[name] = [2, b, timeout]
+    @agis_methods[name] = {arity: 2, method: b, mode: mode, timeout: timeout}
   end
   
   # create a method with three parameters
-  def agis_defm3(name, timeout=nil, &b)
+  def agis_defm3(name, mode=:retry, timeout=nil, &b)
     @agis_methods ||= Hash.new
-    @agis_methods[name] = [3, b, timeout]
+    @agis_methods[name] = {arity: 3, method: b, mode: mode, timeout: timeout}
   end
   
   # alias for agis_defm3
-  def agis_def(name, timeout=nil, &b)
+  def agis_def(name, mode=:retry, timeout=nil, &b)
     agis_defm3(name, timeout, b)
   end
   
@@ -154,8 +154,9 @@ module Agis
         return nil
       end
       mn        = mni[2..-1]
-      mc        = @agis_methods[mn.to_sym][0]
-      meti      = @agis_methods[mn.to_sym][1]
+      mc        = @agis_methods[mn.to_sym][:arity]
+      meti      = @agis_methods[mn.to_sym][:method]
+      mrm       = @agis_methods[mn.to_sym][:mode]
       case meti
       when Proc
         met = meti
@@ -172,6 +173,7 @@ module Agis
         #rescue Redis::Lock::LockNotAcquired
         #  raise Agis::RedisLockExpired
         #end
+        popfive(redis) if mrm == :once
         case mc
         when 0
           ret = agis_aconv(met.call())
@@ -184,7 +186,7 @@ module Agis
         end
         redis.multi do
           redis.hset self.agis_returnbox, lusig, ret
-          popfive redis
+          popfive(redis) if mrm == :retry
         end
         return :next
       rescue Agis::RedisLockExpired => e
@@ -262,7 +264,7 @@ module Agis
   # only be called inside an Agis method, where the box
   # is already guaranteed to be locked
   def agis_recall(mn, arg1=nil, arg2=nil, arg3=nil)
-    meti = @agis_methods[mn.to_sym][1]
+    meti = @agis_methods[mn.to_sym][:method]
     case meti
     when Proc
       met = meti
@@ -272,7 +274,7 @@ module Agis
       met = self.method(mn.to_sym) # when proc is Nil, call the class methods all the same
     end
     
-    case @agis_methods[mn.to_sym][0]
+    case @agis_methods[mn.to_sym][:arity]
     when 0
       return met.call()
     when 1

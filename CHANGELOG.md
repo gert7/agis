@@ -26,3 +26,7 @@
 - Added timeout parameter
 - Retry the lock if it expires and we don't have a result yet
 
+0.2.8
+
+- Introduced :retry and :once options in agis_defm* methods
+

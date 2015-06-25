@@ -30,3 +30,7 @@
 
 - Introduced :retry and :once options in agis_defm* methods
 
+0.2.9
+
+- Introduced agis_call with no parameters No-op call
+

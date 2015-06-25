@@ -329,6 +329,13 @@ describe Agis do
       r.agis_call($redis, :addplayer, 41)
       expect(User.new(41).reservation).to eq "ROOM = 3"
     end
+    
+    it "allows a NOOP call for the message box" do
+      g = Guffin.new
+      g.agis_call($redis, :ident)
+      g.agis_call($redis)
+      expect(g.agis_call($redis, :ident)).to eq "Hello"
+    end
   end
   
   describe "#agis_recall" do

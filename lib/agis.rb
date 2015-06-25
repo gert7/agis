@@ -154,16 +154,23 @@ module Agis
         return nil
       end
       mn        = mni[2..-1]
-      mc        = @agis_methods[mn.to_sym][:arity]
-      meti      = @agis_methods[mn.to_sym][:method]
-      mrm       = @agis_methods[mn.to_sym][:mode]
-      case meti
-      when Proc
-        met = meti
-      when Symbol
-        met = self.method(meti)
-      when NilClass
-        met = self.method(mn.to_sym) # when proc is Nil, call the class methods all the same
+      mns       = mn.to_sym
+      if mn == "AGIS_NOOP" # NOOP
+        redis.hset self.agis_returnbox, lusig, "done"
+        popfive(redis)
+        return :next
+      else
+        mc        = @agis_methods[mns][:arity]
+        mrm       = @agis_methods[mns][:mode]
+        meti    = @agis_methods[mns][:method]
+        case meti
+        when Proc
+          met = meti
+        when Symbol
+          met = self.method(meti)
+        when NilClass
+          met = self.method(mn.to_sym) # when proc is Nil, call the class methods all the same
+        end
       end
       
       begin
@@ -237,7 +244,8 @@ module Agis
   
   # Push a call and ncrunch immediately
   # this returns the last return value from the queue
-  def agis_call(redis, name, arg1=nil, arg2=nil, arg3=nil)
+  def agis_call(redis, name=nil, arg1=nil, arg2=nil, arg3=nil)
+    name ||= "AGIS_NOOP"
     until_sig = Time.now.to_s + ":" + Process.pid.to_s + Random.new.rand(4000000000).to_s + Random.new.rand(4000000000).to_s
     loop do
       begin
@@ -255,7 +263,7 @@ module Agis
   end
   
   # Alias for agis_call
-  def acall(redis, name, arg1=nil, arg2=nil, arg3=nil)
+  def acall(redis, name=nil, arg1=nil, arg2=nil, arg3=nil)
     agis_call(redis, name, arg1, arg2, arg3)
   end
   

@@ -137,3 +137,13 @@ This code reads bind_commit_id from the current instance, but Agis almost assume
     bid = Bind.create.id
     usr.agis_call($redis, :bind, bid)
 
+No-op call
+----------
+
+Version 0.2.9 added a no-op call:
+
+    usr = User.find(id)
+    usr.agis_call($redis)
+    
+This executes the message box whenever needed, such as when transactions have to be resolved for a total balance.
+

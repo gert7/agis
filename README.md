@@ -4,7 +4,7 @@ Agis
 [![Gem Version](https://badge.fury.io/rb/agis.svg)](http://badge.fury.io/rb/agis)
 [![Build Status](https://travis-ci.org/gert7/agis.svg)](https://travis-ci.org/gert7/agis)
 
-A Redis-based stateless Actor library designed with ActiveRecord in mind. Built on deferred retrying, message boxes are only executed when a method is called.
+A Redis-based stateless Actor library designed with ActiveRecord in mind. Built on deferred retrying, message boxes are only locked and executed when a method is called, and are executed sequentially in the same thread. We use Agis to implement per-request behavior.
 
 Both parameters and return values are stored as JSON entities. Actor calls are retried until they return without failure.
 
@@ -52,7 +52,7 @@ Example
       end
       
       def initialize
-        agis_defm1 :incif 
+        agis_defm1 :incif, :retry # retry is default
       end
     end
     
@@ -104,6 +104,20 @@ However, these restrictions are balanced by the following guarantees :
 - Methods called through the same message box (classname + Object#agis_id) are guaranteed to run in a single thread, in sequence
 
 The message box will effectively not move forward until the method call returns. Provided your method doesn't raise an exception or crash, it's guaranteed to run exactly as many times as it is called.
+
+once vs retry
+-----
+
+agis_defm has a second parameter that accepts either :retry or :once. :retry is default:
+
+- :retry removes the method call from the message box AFTER the call returns without an error
+- :once removes the method call from the message box BEFORE executing it
+
+Example:
+
+    agis_defm1 :add_chat_message, :once
+    
+:once isn't always necessary and there may be a way that involves unique identifiers. Retrying may be better whenever multiple actors are involved and are locked into some procedural step they otherwise can't get out of.
 
 Instance variables
 ------------------

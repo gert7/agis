@@ -34,3 +34,8 @@
 
 - Introduced agis_call with no parameters No-op call
 
+0.3.0
+
+- Adds all mailboxes to global list
+- Added agis_crunch_all_records for global behavior
+

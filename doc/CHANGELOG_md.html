@@ -68,6 +68,8 @@
   
     <li><a href="./README_md.html">README</a>
   
+    <li><a href="./agis_gemspec.html">agis.gemspec</a>
+  
   </ul>
 </div>
 
@@ -82,6 +84,52 @@
 usage: agis_defm0($redis, :methodname) - no proc</p>
 </li><li>
 <p>Redis parameter no longer passed in to method calls</p>
+</li></ul>
+
+<p>0.1.7</p>
+<ul><li>
+<p>Removed agis_push</p>
+</li><li>
+<p>Fixed size queue frames</p>
+</li><li>
+<p>Idempotent retrying approach</p>
+</li></ul>
+
+<p>0.1.9</p>
+<ul><li>
+<p>Retry if exceptions or crash, only remove from queue if return</p>
+</li></ul>
+
+<p>0.1.10</p>
+<ul><li>
+<p>Fixed a deadly mailbox failure</p>
+</li></ul>
+
+<p>0.2</p>
+<ul><li>
+<p>Introduced return box for return value fidelity</p>
+</li></ul>
+
+<p>0.2.1</p>
+<ul><li>
+<p>Added timeout parameter</p>
+</li><li>
+<p>Retry the lock if it expires and we don&#39;t have a result yet</p>
+</li></ul>
+
+<p>0.2.8</p>
+<ul><li>
+<p>Introduced :retry and :once options in agis_defm* methods</p>
+</li></ul>
+
+<p>0.2.9</p>
+<ul><li>
+<p>Introduced agis_call with no parameters No-op call</p>
+</li></ul>
+
+<p>0.3.0</p>
+<ul><li>
+<p>Adds all mailboxes to global list</p>
 </li></ul>
 </main>
 

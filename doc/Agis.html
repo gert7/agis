@@ -63,13 +63,23 @@
 
   <ul class="link-list" role="directory">
     
-    <li ><a href="#method-c-new">::new</a>
-    
     <li ><a href="#method-i-_agis_crunch">#_agis_crunch</a>
+    
+    <li ><a href="#method-i-_agis_find_global_mailboxes">#_agis_find_global_mailboxes</a>
+    
+    <li ><a href="#method-i-acall">#acall</a>
     
     <li ><a href="#method-i-agis_aconv">#agis_aconv</a>
     
+    <li ><a href="#method-i-agis_boxlock">#agis_boxlock</a>
+    
     <li ><a href="#method-i-agis_call">#agis_call</a>
+    
+    <li ><a href="#method-i-agis_chew">#agis_chew</a>
+    
+    <li ><a href="#method-i-agis_crunch_all_records">#agis_crunch_all_records</a>
+    
+    <li ><a href="#method-i-agis_crunch_all_records_new">#agis_crunch_all_records_new</a>
     
     <li ><a href="#method-i-agis_def">#agis_def</a>
     
@@ -83,15 +93,23 @@
     
     <li ><a href="#method-i-agis_fconv">#agis_fconv</a>
     
-    <li ><a href="#method-i-agis_lcrunch">#agis_lcrunch</a>
+    <li ><a href="#method-i-agis_find_all_mailboxes">#agis_find_all_mailboxes</a>
+    
+    <li ><a href="#method-i-agis_id_prelim">#agis_id_prelim</a>
     
     <li ><a href="#method-i-agis_mailbox">#agis_mailbox</a>
     
     <li ><a href="#method-i-agis_method">#agis_method</a>
     
-    <li ><a href="#method-i-agis_push">#agis_push</a>
-    
     <li ><a href="#method-i-agis_recall">#agis_recall</a>
+    
+    <li ><a href="#method-i-agis_returnbox">#agis_returnbox</a>
+    
+    <li ><a href="#method-i-agis_try_usig">#agis_try_usig</a>
+    
+    <li ><a href="#method-i-popfive">#popfive</a>
+    
+    <li ><a href="#method-i-pretty_exception">#pretty_exception</a>
     
   </ul>
 </div>
@@ -119,83 +137,8 @@
     
 
     
-    <section class="attribute-method-details" class="method-section">
-      <header>
-        <h3>Attributes</h3>
-      </header>
-
-      
-      <div id="attribute-i-agis_id" class="method-detail">
-        <div class="method-heading attribute-method-heading">
-          <span class="method-name">agis_id</span><span
-            class="attribute-access-type">[RW]</span>
-        </div>
-
-        <div class="method-description">
-        
-        
-        
-        </div>
-      </div>
-      
-      <div id="attribute-i-agis_methods" class="method-detail">
-        <div class="method-heading attribute-method-heading">
-          <span class="method-name">agis_methods</span><span
-            class="attribute-access-type">[RW]</span>
-        </div>
-
-        <div class="method-description">
-        
-        
-        
-        </div>
-      </div>
-      
-    </section>
-    
 
     
-     <section id="public-class-5Buntitled-5D-method-details" class="method-section">
-       <header>
-         <h3>Public Class Methods</h3>
-       </header>
-
-    
-      <div id="method-c-new" class="method-detail ">
-        
-        <div class="method-heading">
-          <span class="method-name">new</span><span
-            class="method-args">()</span>
-          
-          <span class="method-click-advice">click to toggle source</span>
-          
-        </div>
-        
-
-        <div class="method-description">
-          
-          
-          
-          
-
-          
-          <div class="method-source-code" id="new-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 13</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">initialize</span>
-  <span class="ruby-ivar">@agis_methods</span> = <span class="ruby-constant">Hash</span>.<span class="ruby-identifier">new</span>
-<span class="ruby-keyword">end</span></pre>
-          </div>
-          
-        </div>
-
-        
-
-        
-      </div>
-
-    
-    </section>
-  
      <section id="public-instance-5Buntitled-5D-method-details" class="method-section">
        <header>
          <h3>Public Instance Methods</h3>
@@ -206,7 +149,7 @@
         
         <div class="method-heading">
           <span class="method-name">_agis_crunch</span><span
-            class="method-args">(lock, redis, until_sig)</span>
+            class="method-args">(redis, usig)</span>
           
           <span class="method-click-advice">click to toggle source</span>
           
@@ -221,56 +164,85 @@
 
           
           <div class="method-source-code" id="_agis_crunch-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 122</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">_agis_crunch</span>(<span class="ruby-identifier">lock</span>, <span class="ruby-identifier">redis</span>, <span class="ruby-identifier">until_sig</span>)
-  <span class="ruby-comment"># loop do</span>
-  <span class="ruby-comment">#  a = redis.lpop(self.agis_mailbox)</span>
-  <span class="ruby-comment">#  a ? puts a : break</span>
-  <span class="ruby-comment"># end</span>
-  <span class="ruby-comment"># return 0</span>
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 230</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">_agis_crunch</span>(<span class="ruby-identifier">redis</span>, <span class="ruby-identifier">usig</span>)
   <span class="ruby-identifier">loop</span> <span class="ruby-keyword">do</span>
-    <span class="ruby-identifier">mni</span> = <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">lpop</span>(<span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>)
-    <span class="ruby-keyword">if</span> <span class="ruby-identifier">mni</span> <span class="ruby-keyword">and</span> <span class="ruby-identifier">mni</span>[<span class="ruby-value">0</span><span class="ruby-operator">..</span><span class="ruby-value">1</span>] <span class="ruby-operator">==</span> <span class="ruby-string">&quot;m:&quot;</span>
-      <span class="ruby-identifier">args</span> = []
-      <span class="ruby-identifier">mn</span> = <span class="ruby-identifier">mni</span>[<span class="ruby-value">2</span><span class="ruby-operator">..</span><span class="ruby-value">-1</span>]
-      <span class="ruby-identifier">mc</span> = <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">mn</span>.<span class="ruby-identifier">to_sym</span>][<span class="ruby-value">0</span>]
-      <span class="ruby-identifier">meti</span> = <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">mn</span>.<span class="ruby-identifier">to_sym</span>][<span class="ruby-value">2</span>]
-      <span class="ruby-keyword">case</span> <span class="ruby-identifier">meti</span>
-      <span class="ruby-keyword">when</span> <span class="ruby-constant">Proc</span>
-        <span class="ruby-identifier">met</span> = <span class="ruby-identifier">meti</span>
-      <span class="ruby-keyword">when</span> <span class="ruby-constant">Symbol</span>
-        <span class="ruby-identifier">met</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">method</span>(<span class="ruby-identifier">meti</span>)
-      <span class="ruby-keyword">when</span> <span class="ruby-constant">NilClass</span>
-        <span class="ruby-identifier">met</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">method</span>(<span class="ruby-identifier">mn</span>.<span class="ruby-identifier">to_sym</span>) <span class="ruby-comment"># when proc is Nil, call the class methods all the same</span>
+    <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">lock</span>(<span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_boxlock</span>, <span class="ruby-identifier">life</span><span class="ruby-operator">:</span> <span class="ruby-value">10</span>) <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">lock</span><span class="ruby-operator">|</span>
+      <span class="ruby-identifier">a</span> = <span class="ruby-identifier">agis_chew</span>(<span class="ruby-identifier">redis</span>, <span class="ruby-identifier">lock</span>)
+      <span class="ruby-keyword">next</span> <span class="ruby-keyword">if</span> <span class="ruby-identifier">lock</span>.<span class="ruby-identifier">stale_key?</span>
+      <span class="ruby-identifier">u</span> = <span class="ruby-identifier">agis_try_usig</span>(<span class="ruby-identifier">redis</span>, <span class="ruby-identifier">usig</span>)
+      <span class="ruby-keyword">if</span> <span class="ruby-identifier">a</span> <span class="ruby-operator">==</span> <span class="ruby-value">:empty</span>
+        <span class="ruby-identifier">raise</span> <span class="ruby-constant">Agis</span><span class="ruby-operator">::</span><span class="ruby-constant">MessageBoxEmpty</span> <span class="ruby-keyword">unless</span> <span class="ruby-identifier">u</span>
       <span class="ruby-keyword">end</span>
-      
-      <span class="ruby-identifier">mc</span>.<span class="ruby-identifier">times</span> <span class="ruby-keyword">do</span>
-        <span class="ruby-identifier">args</span>.<span class="ruby-identifier">push</span> <span class="ruby-identifier">agis_fconv</span>(<span class="ruby-identifier">redis</span>.<span class="ruby-identifier">lpop</span>(<span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>))
-      <span class="ruby-keyword">end</span>
-      <span class="ruby-keyword">case</span> <span class="ruby-identifier">mc</span>
-      <span class="ruby-keyword">when</span> <span class="ruby-value">0</span>
-        <span class="ruby-ivar">@last</span> = <span class="ruby-identifier">met</span>.<span class="ruby-identifier">call</span>()
-      <span class="ruby-keyword">when</span> <span class="ruby-value">1</span>
-        <span class="ruby-ivar">@last</span> = <span class="ruby-identifier">met</span>.<span class="ruby-identifier">call</span>(<span class="ruby-identifier">args</span>[<span class="ruby-value">0</span>])
-      <span class="ruby-keyword">when</span> <span class="ruby-value">2</span>
-        <span class="ruby-ivar">@last</span> = <span class="ruby-identifier">met</span>.<span class="ruby-identifier">call</span>(<span class="ruby-identifier">args</span>[<span class="ruby-value">0</span>], <span class="ruby-identifier">args</span>[<span class="ruby-value">1</span>])
-      <span class="ruby-keyword">when</span> <span class="ruby-value">3</span>
-        <span class="ruby-ivar">@last</span> = <span class="ruby-identifier">met</span>.<span class="ruby-identifier">call</span>(<span class="ruby-identifier">args</span>[<span class="ruby-value">0</span>], <span class="ruby-identifier">args</span>[<span class="ruby-value">1</span>], <span class="ruby-identifier">args</span>[<span class="ruby-value">2</span>])
-      <span class="ruby-keyword">end</span>
-      <span class="ruby-identifier">lock</span>.<span class="ruby-identifier">extend_life</span> <span class="ruby-value">5</span>
-      <span class="ruby-identifier">mn</span> = <span class="ruby-keyword">nil</span>
-    <span class="ruby-keyword">elsif</span> <span class="ruby-identifier">mni</span>[<span class="ruby-value">0</span><span class="ruby-operator">..</span><span class="ruby-value">1</span>] <span class="ruby-operator">==</span> <span class="ruby-string">&quot;r:&quot;</span>
-      <span class="ruby-keyword">if</span>(<span class="ruby-identifier">mni</span>[<span class="ruby-value">2</span><span class="ruby-operator">..</span><span class="ruby-value">-1</span>] <span class="ruby-operator">==</span> <span class="ruby-identifier">until_sig</span>)
-        <span class="ruby-keyword">return</span> <span class="ruby-ivar">@last</span>
-      <span class="ruby-keyword">else</span>
-        <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;AGIS error 1: Orphaned return marker! An agis_call was here...&quot;</span>
-      <span class="ruby-keyword">end</span>
-    <span class="ruby-keyword">elsif</span> <span class="ruby-identifier">mni</span> <span class="ruby-operator">==</span> <span class="ruby-keyword">nil</span>
-      <span class="ruby-keyword">return</span> <span class="ruby-ivar">@last</span>
-    <span class="ruby-keyword">else</span>
-      <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;AGIS error 2: Unrecognized line! Might be an orphaned thread...&quot;</span>
+      <span class="ruby-keyword">return</span> <span class="ruby-identifier">agis_fconv</span>(<span class="ruby-identifier">u</span>) <span class="ruby-keyword">if</span> <span class="ruby-identifier">u</span>
     <span class="ruby-keyword">end</span>
   <span class="ruby-keyword">end</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-_agis_find_global_mailboxes" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">_agis_find_global_mailboxes</span><span
+            class="method-args">(redis)</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>Find all mailboxes total</p>
+          
+          
+
+          
+          <div class="method-source-code" id="_agis_find_global_mailboxes-source">
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 245</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">_agis_find_global_mailboxes</span>(<span class="ruby-identifier">redis</span>)
+  <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">smembers</span>(<span class="ruby-string">&quot;AGIS_MAILBOX_GLOBAL_LIST&quot;</span>)
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-acall" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">acall</span><span
+            class="method-args">(redis, name=nil, arg1=nil, arg2=nil, arg3=nil)</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>Alias for <a href="Agis.html#method-i-agis_call">#agis_call</a></p>
+          
+          
+
+          
+          <div class="method-source-code" id="acall-source">
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 304</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">acall</span>(<span class="ruby-identifier">redis</span>, <span class="ruby-identifier">name</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg1</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg2</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg3</span>=<span class="ruby-keyword">nil</span>)
+  <span class="ruby-identifier">agis_call</span>(<span class="ruby-identifier">redis</span>, <span class="ruby-identifier">name</span>, <span class="ruby-identifier">arg1</span>, <span class="ruby-identifier">arg2</span>, <span class="ruby-identifier">arg3</span>)
 <span class="ruby-keyword">end</span></pre>
           </div>
           
@@ -301,7 +273,7 @@
 
           
           <div class="method-source-code" id="agis_aconv-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 23</span>
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 43</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">v</span>)
   <span class="ruby-identifier">a</span> = <span class="ruby-string">&quot;&quot;</span>
   <span class="ruby-keyword">case</span> <span class="ruby-identifier">v</span>
@@ -312,9 +284,9 @@
   <span class="ruby-keyword">when</span> <span class="ruby-constant">Integer</span>
     <span class="ruby-identifier">a</span> = <span class="ruby-string">&quot;i:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">v</span>.<span class="ruby-identifier">to_s</span>
   <span class="ruby-keyword">when</span> <span class="ruby-constant">Hash</span>
-    <span class="ruby-identifier">a</span> = <span class="ruby-string">&quot;h:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">v</span>.<span class="ruby-identifier">to_json</span>
+    <span class="ruby-identifier">a</span> = <span class="ruby-string">&quot;h:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">v</span>.<span class="ruby-identifier">to_json</span>.<span class="ruby-identifier">to_s</span>
   <span class="ruby-keyword">when</span> <span class="ruby-constant">Array</span>
-    <span class="ruby-identifier">a</span> = <span class="ruby-string">&quot;a:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">v</span>.<span class="ruby-identifier">to_json</span>
+    <span class="ruby-identifier">a</span> = <span class="ruby-string">&quot;a:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">v</span>.<span class="ruby-identifier">to_json</span>.<span class="ruby-identifier">to_s</span>
   <span class="ruby-keyword">when</span> <span class="ruby-constant">Float</span>
     <span class="ruby-identifier">a</span> = <span class="ruby-string">&quot;d:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">v</span>.<span class="ruby-identifier">to_s</span>
   <span class="ruby-keyword">when</span> <span class="ruby-constant">TrueClass</span>
@@ -324,9 +296,42 @@
   <span class="ruby-keyword">when</span> <span class="ruby-constant">NilClass</span>
     <span class="ruby-identifier">a</span> = <span class="ruby-string">&quot;n:&quot;</span>
   <span class="ruby-keyword">else</span>
-    <span class="ruby-identifier">a</span> = <span class="ruby-string">&quot;h:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">v</span>.<span class="ruby-identifier">to_json</span>
+    <span class="ruby-identifier">a</span> = <span class="ruby-string">&quot;h:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">v</span>.<span class="ruby-identifier">to_json</span>.<span class="ruby-identifier">to_s</span>
   <span class="ruby-keyword">end</span>
   <span class="ruby-keyword">return</span> <span class="ruby-identifier">a</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-agis_boxlock" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">agis_boxlock</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          
+          
+          
+
+          
+          <div class="method-source-code" id="agis_boxlock-source">
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 142</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_boxlock</span>
+  <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span> <span class="ruby-operator">+</span> <span class="ruby-string">&quot;.LOCK&quot;</span>
 <span class="ruby-keyword">end</span></pre>
           </div>
           
@@ -342,7 +347,7 @@
         
         <div class="method-heading">
           <span class="method-name">agis_call</span><span
-            class="method-args">(redis, name, arg1=nil, arg2=nil, arg3=nil)</span>
+            class="method-args">(redis, name=nil, arg1=nil, arg2=nil, arg3=nil)</span>
           
           <span class="method-click-advice">click to toggle source</span>
           
@@ -358,13 +363,198 @@ the queue</p>
 
           
           <div class="method-source-code" id="agis_call-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 196</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_call</span>(<span class="ruby-identifier">redis</span>, <span class="ruby-identifier">name</span>, <span class="ruby-identifier">arg1</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg2</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg3</span>=<span class="ruby-keyword">nil</span>)
-  <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">lock</span>(<span class="ruby-identifier">agis_mailbox</span> <span class="ruby-operator">+</span> <span class="ruby-string">&quot;.LOCK&quot;</span>, <span class="ruby-identifier">life</span><span class="ruby-operator">:</span> <span class="ruby-value">4</span>, <span class="ruby-identifier">acquire</span><span class="ruby-operator">:</span> <span class="ruby-value">60</span>) <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">lock</span><span class="ruby-operator">|</span>
-    <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">name</span>][<span class="ruby-value">1</span>].<span class="ruby-identifier">call</span>(<span class="ruby-identifier">redis</span>, <span class="ruby-identifier">arg1</span>, <span class="ruby-identifier">arg2</span>, <span class="ruby-identifier">arg3</span>)
-    <span class="ruby-identifier">until_sig</span> = <span class="ruby-constant">Time</span>.<span class="ruby-identifier">now</span>.<span class="ruby-identifier">to_s</span> <span class="ruby-operator">+</span> <span class="ruby-string">&quot;:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-constant">Process</span>.<span class="ruby-identifier">pid</span>.<span class="ruby-identifier">to_s</span> <span class="ruby-operator">+</span> <span class="ruby-constant">Random</span>.<span class="ruby-identifier">new</span>.<span class="ruby-identifier">rand</span>(<span class="ruby-value">4000000000</span>).<span class="ruby-identifier">to_s</span>
-    <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-string">&quot;r:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">until_sig</span>
-    <span class="ruby-identifier">_agis_crunch</span>(<span class="ruby-identifier">lock</span>, <span class="ruby-identifier">redis</span>, <span class="ruby-identifier">until_sig</span>)
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 282</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_call</span>(<span class="ruby-identifier">redis</span>, <span class="ruby-identifier">name</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg1</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg2</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg3</span>=<span class="ruby-keyword">nil</span>)
+  <span class="ruby-identifier">name</span> <span class="ruby-operator">||=</span> <span class="ruby-string">&quot;AGIS_NOOP&quot;</span>
+  <span class="ruby-identifier">until_sig</span> = <span class="ruby-constant">Time</span>.<span class="ruby-identifier">now</span>.<span class="ruby-identifier">to_s</span> <span class="ruby-operator">+</span> <span class="ruby-string">&quot;:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-constant">Process</span>.<span class="ruby-identifier">pid</span>.<span class="ruby-identifier">to_s</span> <span class="ruby-operator">+</span> <span class="ruby-constant">Random</span>.<span class="ruby-identifier">new</span>.<span class="ruby-identifier">rand</span>(<span class="ruby-value">4000000000</span>).<span class="ruby-identifier">to_s</span> <span class="ruby-operator">+</span> <span class="ruby-constant">Random</span>.<span class="ruby-identifier">new</span>.<span class="ruby-identifier">rand</span>(<span class="ruby-value">4000000000</span>).<span class="ruby-identifier">to_s</span>
+  <span class="ruby-identifier">loop</span> <span class="ruby-keyword">do</span>
+    <span class="ruby-keyword">begin</span>
+      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">sadd</span>(<span class="ruby-string">&quot;AGIS_MAILBOX_CLASSES&quot;</span>, <span class="ruby-keyword">self</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">to_s</span>)
+      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">sadd</span>(<span class="ruby-string">&quot;AGIS_MAILBOX_CLASS:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">to_s</span>, <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_id_prelim</span>)
+      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">sadd</span>(<span class="ruby-string">&quot;AGIS_MAILBOX_GLOBAL_LIST&quot;</span>, <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>)
+      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">multi</span> <span class="ruby-keyword">do</span>
+        <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-string">&quot;m:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">name</span>.<span class="ruby-identifier">to_s</span>
+        <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">arg1</span>)
+        <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">arg2</span>)
+        <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">arg3</span>)
+        <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-string">&quot;r:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">until_sig</span>
+      <span class="ruby-keyword">end</span>
+      <span class="ruby-keyword">return</span> <span class="ruby-identifier">_agis_crunch</span>(<span class="ruby-identifier">redis</span>, <span class="ruby-identifier">until_sig</span>)
+    <span class="ruby-keyword">rescue</span> <span class="ruby-constant">Agis</span><span class="ruby-operator">::</span><span class="ruby-constant">MessageBoxEmpty</span>
+    <span class="ruby-keyword">end</span>
+  <span class="ruby-keyword">end</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-agis_chew" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">agis_chew</span><span
+            class="method-args">(redis, lock)</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          
+          
+          
+
+          
+          <div class="method-source-code" id="agis_chew-source">
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 150</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_chew</span>(<span class="ruby-identifier">redis</span>, <span class="ruby-identifier">lock</span>)
+  <span class="ruby-identifier">args</span> = <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">lrange</span>(<span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-value">0</span>, <span class="ruby-value">4</span>)
+  <span class="ruby-identifier">mni</span>  = <span class="ruby-identifier">args</span>[<span class="ruby-value">0</span>]
+  <span class="ruby-keyword">if</span>(<span class="ruby-identifier">mni</span> <span class="ruby-keyword">and</span> <span class="ruby-identifier">mni</span>[<span class="ruby-value">0</span><span class="ruby-operator">..</span><span class="ruby-value">1</span>] <span class="ruby-operator">==</span> <span class="ruby-string">&quot;m:&quot;</span>)
+    <span class="ruby-comment"># don&#39;t do any signatures twice ever</span>
+    <span class="ruby-identifier">lusig</span> = <span class="ruby-identifier">args</span>[<span class="ruby-value">4</span>][<span class="ruby-value">2</span><span class="ruby-operator">..</span><span class="ruby-value">-1</span>]
+    <span class="ruby-comment">#puts lusig</span>
+    <span class="ruby-keyword">if</span> <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">hget</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_returnbox</span>, <span class="ruby-identifier">lusig</span>
+      <span class="ruby-identifier">popfive</span> <span class="ruby-identifier">redis</span>
+      <span class="ruby-keyword">return</span> <span class="ruby-keyword">nil</span>
+    <span class="ruby-keyword">end</span>
+    <span class="ruby-identifier">mn</span>        = <span class="ruby-identifier">mni</span>[<span class="ruby-value">2</span><span class="ruby-operator">..</span><span class="ruby-value">-1</span>]
+    <span class="ruby-identifier">mns</span>       = <span class="ruby-identifier">mn</span>.<span class="ruby-identifier">to_sym</span>
+    <span class="ruby-keyword">if</span> <span class="ruby-identifier">mn</span> <span class="ruby-operator">==</span> <span class="ruby-string">&quot;AGIS_NOOP&quot;</span> <span class="ruby-comment"># NOOP</span>
+      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">hset</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_returnbox</span>, <span class="ruby-identifier">lusig</span>, <span class="ruby-string">&quot;done&quot;</span>
+      <span class="ruby-identifier">popfive</span>(<span class="ruby-identifier">redis</span>)
+      <span class="ruby-keyword">return</span> <span class="ruby-value">:next</span>
+    <span class="ruby-keyword">else</span>
+      <span class="ruby-identifier">mc</span>        = <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">mns</span>][<span class="ruby-value">:arity</span>]
+      <span class="ruby-identifier">mrm</span>       = <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">mns</span>][<span class="ruby-value">:mode</span>]
+      <span class="ruby-identifier">meti</span>    = <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">mns</span>][<span class="ruby-value">:method</span>]
+      <span class="ruby-keyword">case</span> <span class="ruby-identifier">meti</span>
+      <span class="ruby-keyword">when</span> <span class="ruby-constant">Proc</span>
+        <span class="ruby-identifier">met</span> = <span class="ruby-identifier">meti</span>
+      <span class="ruby-keyword">when</span> <span class="ruby-constant">Symbol</span>
+        <span class="ruby-identifier">met</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">method</span>(<span class="ruby-identifier">meti</span>)
+      <span class="ruby-keyword">when</span> <span class="ruby-constant">NilClass</span>
+        <span class="ruby-identifier">met</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">method</span>(<span class="ruby-identifier">mn</span>.<span class="ruby-identifier">to_sym</span>) <span class="ruby-comment"># when proc is Nil, call the class methods all the same</span>
+      <span class="ruby-keyword">end</span>
+    <span class="ruby-keyword">end</span>
+    
+    <span class="ruby-keyword">begin</span>
+      <span class="ruby-comment">#raise Agis::RedisLockExpired if lock.stale_key?</span>
+      <span class="ruby-comment">#begin</span>
+      <span class="ruby-comment">#  lock.extend_life (@agis_methods[mn.to_sym][2] or 5)</span>
+      <span class="ruby-comment">#rescue Redis::Lock::LockNotAcquired</span>
+      <span class="ruby-comment">#  raise Agis::RedisLockExpired</span>
+      <span class="ruby-comment">#end</span>
+      <span class="ruby-identifier">popfive</span>(<span class="ruby-identifier">redis</span>) <span class="ruby-keyword">if</span> <span class="ruby-identifier">mrm</span> <span class="ruby-operator">==</span> <span class="ruby-value">:once</span>
+      <span class="ruby-keyword">case</span> <span class="ruby-identifier">mc</span>
+      <span class="ruby-keyword">when</span> <span class="ruby-value">0</span>
+        <span class="ruby-identifier">ret</span> = <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">met</span>.<span class="ruby-identifier">call</span>())
+      <span class="ruby-keyword">when</span> <span class="ruby-value">1</span>
+        <span class="ruby-identifier">ret</span> = <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">met</span>.<span class="ruby-identifier">call</span>(<span class="ruby-identifier">agis_fconv</span>(<span class="ruby-identifier">args</span>[<span class="ruby-value">1</span>])))
+      <span class="ruby-keyword">when</span> <span class="ruby-value">2</span>
+        <span class="ruby-identifier">ret</span> = <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">met</span>.<span class="ruby-identifier">call</span>(<span class="ruby-identifier">agis_fconv</span>(<span class="ruby-identifier">args</span>[<span class="ruby-value">1</span>]), <span class="ruby-identifier">agis_fconv</span>(<span class="ruby-identifier">args</span>[<span class="ruby-value">2</span>])))
+      <span class="ruby-keyword">when</span> <span class="ruby-value">3</span>
+        <span class="ruby-identifier">ret</span> = <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">met</span>.<span class="ruby-identifier">call</span>(<span class="ruby-identifier">agis_fconv</span>(<span class="ruby-identifier">args</span>[<span class="ruby-value">1</span>]), <span class="ruby-identifier">agis_fconv</span>(<span class="ruby-identifier">args</span>[<span class="ruby-value">2</span>]), <span class="ruby-identifier">agis_fconv</span>(<span class="ruby-identifier">args</span>[<span class="ruby-value">3</span>])))
+      <span class="ruby-keyword">end</span>
+      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">multi</span> <span class="ruby-keyword">do</span>
+        <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">hset</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_returnbox</span>, <span class="ruby-identifier">lusig</span>, <span class="ruby-identifier">ret</span>
+        <span class="ruby-identifier">popfive</span>(<span class="ruby-identifier">redis</span>) <span class="ruby-keyword">if</span> <span class="ruby-identifier">mrm</span> <span class="ruby-operator">==</span> <span class="ruby-value">:retry</span>
+      <span class="ruby-keyword">end</span>
+      <span class="ruby-keyword">return</span> <span class="ruby-value">:next</span>
+    <span class="ruby-keyword">rescue</span> <span class="ruby-constant">Agis</span><span class="ruby-operator">::</span><span class="ruby-constant">RedisLockExpired</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">e</span>
+      <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;Agis lock expired for &quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">args</span>.<span class="ruby-identifier">to_s</span> <span class="ruby-keyword">if</span> (<span class="ruby-ivar">@agis_debugmode</span> <span class="ruby-operator">==</span> <span class="ruby-keyword">true</span>)
+      <span class="ruby-comment"># popfive redis</span>
+      <span class="ruby-keyword">return</span> <span class="ruby-value">:relock</span>
+    <span class="ruby-keyword">rescue</span> =<span class="ruby-operator">&gt;</span> <span class="ruby-identifier">e</span>
+      <span class="ruby-comment">#puts &quot;feck&quot;</span>
+      <span class="ruby-identifier">lock</span>.<span class="ruby-identifier">unlock</span>
+      <span class="ruby-identifier">raise</span> <span class="ruby-identifier">e</span>
+    <span class="ruby-keyword">end</span>
+  <span class="ruby-keyword">elsif</span> <span class="ruby-keyword">not</span> <span class="ruby-identifier">mni</span>
+    <span class="ruby-keyword">return</span> <span class="ruby-value">:empty</span>
+  <span class="ruby-keyword">else</span>
+    <span class="ruby-identifier">puts</span> <span class="ruby-string">&quot;AGIS error: Unrecognized line!&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">mni</span>.<span class="ruby-identifier">to_s</span>
+  <span class="ruby-keyword">end</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-agis_crunch_all_records" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">agis_crunch_all_records</span><span
+            class="method-args">(redis)</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>Crunch all agis calls on a single model found using the find method with
+the agis_id or id. Must be numeric</p>
+          
+          
+
+          
+          <div class="method-source-code" id="agis_crunch_all_records-source">
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 257</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_crunch_all_records</span>(<span class="ruby-identifier">redis</span>)
+  <span class="ruby-identifier">all</span> = <span class="ruby-identifier">agis_find_all_mailboxes</span>(<span class="ruby-identifier">redis</span>)
+  <span class="ruby-identifier">all</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">id</span><span class="ruby-operator">|</span>
+    <span class="ruby-keyword">self</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">find</span>(<span class="ruby-identifier">id</span>).<span class="ruby-identifier">agis_call</span>(<span class="ruby-identifier">redis</span>)
+  <span class="ruby-keyword">end</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-agis_crunch_all_records_new" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">agis_crunch_all_records_new</span><span
+            class="method-args">(redis)</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          <p>Crunch all agis calls on a single model found using the new method with id
+set to agis_id or id</p>
+          
+          
+
+          
+          <div class="method-source-code" id="agis_crunch_all_records_new-source">
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 267</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_crunch_all_records_new</span>(<span class="ruby-identifier">redis</span>)
+  <span class="ruby-identifier">all</span> = <span class="ruby-identifier">agis_find_all_mailboxes</span>(<span class="ruby-identifier">redis</span>)
+  <span class="ruby-identifier">all</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">id</span><span class="ruby-operator">|</span>
+    <span class="ruby-keyword">self</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">new</span>(<span class="ruby-identifier">id</span>).<span class="ruby-identifier">agis_call</span>(<span class="ruby-identifier">redis</span>)
   <span class="ruby-keyword">end</span>
 <span class="ruby-keyword">end</span></pre>
           </div>
@@ -381,7 +571,7 @@ the queue</p>
         
         <div class="method-heading">
           <span class="method-name">agis_def</span><span
-            class="method-args">(name, &b)</span>
+            class="method-args">(name, mode=:retry, timeout=nil, &b)</span>
           
           <span class="method-click-advice">click to toggle source</span>
           
@@ -397,8 +587,8 @@ the queue</p>
           
           <div class="method-source-code" id="agis_def-source">
             <pre><span class="ruby-comment"># File lib/agis.rb, line 118</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_def</span>(<span class="ruby-identifier">name</span>, <span class="ruby-operator">&amp;</span><span class="ruby-identifier">b</span>)
-  <span class="ruby-identifier">agis_defm3</span>(<span class="ruby-identifier">name</span>, <span class="ruby-identifier">b</span>)
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_def</span>(<span class="ruby-identifier">name</span>, <span class="ruby-identifier">mode</span>=<span class="ruby-value">:retry</span>, <span class="ruby-identifier">timeout</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-operator">&amp;</span><span class="ruby-identifier">b</span>)
+  <span class="ruby-identifier">agis_defm3</span>(<span class="ruby-identifier">name</span>, <span class="ruby-identifier">timeout</span>, <span class="ruby-identifier">b</span>)
 <span class="ruby-keyword">end</span></pre>
           </div>
           
@@ -414,7 +604,7 @@ the queue</p>
         
         <div class="method-heading">
           <span class="method-name">agis_defm0</span><span
-            class="method-args">(name, &b)</span>
+            class="method-args">(name, mode=:retry, timeout=nil, &b)</span>
           
           <span class="method-click-advice">click to toggle source</span>
           
@@ -429,12 +619,10 @@ the queue</p>
 
           
           <div class="method-source-code" id="agis_defm0-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 74</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_defm0</span>(<span class="ruby-identifier">name</span>, <span class="ruby-operator">&amp;</span><span class="ruby-identifier">b</span>)
-  <span class="ruby-identifier">push</span> = <span class="ruby-constant">Proc</span>.<span class="ruby-identifier">new</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">redis</span>, <span class="ruby-identifier">arg1</span>, <span class="ruby-identifier">arg2</span>, <span class="ruby-identifier">arg3</span><span class="ruby-operator">|</span>
-    <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-string">&quot;m:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">name</span>.<span class="ruby-identifier">to_s</span>
-  <span class="ruby-keyword">end</span>
-  <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">name</span>] = [<span class="ruby-value">0</span>, <span class="ruby-identifier">push</span>, <span class="ruby-identifier">b</span>]
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 94</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_defm0</span>(<span class="ruby-identifier">name</span>, <span class="ruby-identifier">mode</span>=<span class="ruby-value">:retry</span>, <span class="ruby-identifier">timeout</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-operator">&amp;</span><span class="ruby-identifier">b</span>)
+  <span class="ruby-ivar">@agis_methods</span> <span class="ruby-operator">||=</span> <span class="ruby-constant">Hash</span>.<span class="ruby-identifier">new</span>
+  <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">name</span>] = {<span class="ruby-identifier">arity</span><span class="ruby-operator">:</span> <span class="ruby-value">0</span>, <span class="ruby-identifier">method</span><span class="ruby-operator">:</span> <span class="ruby-identifier">b</span>, <span class="ruby-identifier">mode</span><span class="ruby-operator">:</span> <span class="ruby-identifier">mode</span>, <span class="ruby-identifier">timeout</span><span class="ruby-operator">:</span> <span class="ruby-identifier">timeout</span>}
 <span class="ruby-keyword">end</span></pre>
           </div>
           
@@ -450,7 +638,7 @@ the queue</p>
         
         <div class="method-heading">
           <span class="method-name">agis_defm1</span><span
-            class="method-args">(name, &b)</span>
+            class="method-args">(name, mode=:retry, timeout=nil, &b)</span>
           
           <span class="method-click-advice">click to toggle source</span>
           
@@ -465,15 +653,10 @@ the queue</p>
 
           
           <div class="method-source-code" id="agis_defm1-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 82</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_defm1</span>(<span class="ruby-identifier">name</span>, <span class="ruby-operator">&amp;</span><span class="ruby-identifier">b</span>)
-  <span class="ruby-identifier">push</span> = <span class="ruby-constant">Proc</span>.<span class="ruby-identifier">new</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">redis</span>, <span class="ruby-identifier">arg1</span>, <span class="ruby-identifier">arg2</span>, <span class="ruby-identifier">arg3</span><span class="ruby-operator">|</span>
-    <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">multi</span> <span class="ruby-keyword">do</span>
-      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-string">&quot;m:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">name</span>.<span class="ruby-identifier">to_s</span>
-      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">arg1</span>)
-    <span class="ruby-keyword">end</span>
-  <span class="ruby-keyword">end</span>
-  <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">name</span>] = [<span class="ruby-value">1</span>, <span class="ruby-identifier">push</span>, <span class="ruby-identifier">b</span>]
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 100</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_defm1</span>(<span class="ruby-identifier">name</span>, <span class="ruby-identifier">mode</span>=<span class="ruby-value">:retry</span>, <span class="ruby-identifier">timeout</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-operator">&amp;</span><span class="ruby-identifier">b</span>)
+  <span class="ruby-ivar">@agis_methods</span> <span class="ruby-operator">||=</span> <span class="ruby-constant">Hash</span>.<span class="ruby-identifier">new</span>
+  <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">name</span>] = {<span class="ruby-identifier">arity</span><span class="ruby-operator">:</span> <span class="ruby-value">1</span>, <span class="ruby-identifier">method</span><span class="ruby-operator">:</span> <span class="ruby-identifier">b</span>, <span class="ruby-identifier">mode</span><span class="ruby-operator">:</span> <span class="ruby-identifier">mode</span>, <span class="ruby-identifier">timeout</span><span class="ruby-operator">:</span> <span class="ruby-identifier">timeout</span>}
 <span class="ruby-keyword">end</span></pre>
           </div>
           
@@ -489,7 +672,7 @@ the queue</p>
         
         <div class="method-heading">
           <span class="method-name">agis_defm2</span><span
-            class="method-args">(name, &b)</span>
+            class="method-args">(name, mode=:retry, timeout=nil, &b)</span>
           
           <span class="method-click-advice">click to toggle source</span>
           
@@ -504,16 +687,10 @@ the queue</p>
 
           
           <div class="method-source-code" id="agis_defm2-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 93</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_defm2</span>(<span class="ruby-identifier">name</span>, <span class="ruby-operator">&amp;</span><span class="ruby-identifier">b</span>)
-  <span class="ruby-identifier">push</span> = <span class="ruby-constant">Proc</span>.<span class="ruby-identifier">new</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">redis</span>, <span class="ruby-identifier">arg1</span>, <span class="ruby-identifier">arg2</span>, <span class="ruby-identifier">arg3</span><span class="ruby-operator">|</span>
-    <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">multi</span> <span class="ruby-keyword">do</span>
-      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-string">&quot;m:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">name</span>.<span class="ruby-identifier">to_s</span>
-      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">arg1</span>)
-      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">arg2</span>)
-    <span class="ruby-keyword">end</span>
-  <span class="ruby-keyword">end</span>
-  <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">name</span>] = [<span class="ruby-value">2</span>, <span class="ruby-identifier">push</span>, <span class="ruby-identifier">b</span>]
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 106</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_defm2</span>(<span class="ruby-identifier">name</span>, <span class="ruby-identifier">mode</span>=<span class="ruby-value">:retry</span>, <span class="ruby-identifier">timeout</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-operator">&amp;</span><span class="ruby-identifier">b</span>)
+  <span class="ruby-ivar">@agis_methods</span> <span class="ruby-operator">||=</span> <span class="ruby-constant">Hash</span>.<span class="ruby-identifier">new</span>
+  <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">name</span>] = {<span class="ruby-identifier">arity</span><span class="ruby-operator">:</span> <span class="ruby-value">2</span>, <span class="ruby-identifier">method</span><span class="ruby-operator">:</span> <span class="ruby-identifier">b</span>, <span class="ruby-identifier">mode</span><span class="ruby-operator">:</span> <span class="ruby-identifier">mode</span>, <span class="ruby-identifier">timeout</span><span class="ruby-operator">:</span> <span class="ruby-identifier">timeout</span>}
 <span class="ruby-keyword">end</span></pre>
           </div>
           
@@ -529,7 +706,7 @@ the queue</p>
         
         <div class="method-heading">
           <span class="method-name">agis_defm3</span><span
-            class="method-args">(name, &b)</span>
+            class="method-args">(name, mode=:retry, timeout=nil, &b)</span>
           
           <span class="method-click-advice">click to toggle source</span>
           
@@ -544,17 +721,10 @@ the queue</p>
 
           
           <div class="method-source-code" id="agis_defm3-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 105</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_defm3</span>(<span class="ruby-identifier">name</span>, <span class="ruby-operator">&amp;</span><span class="ruby-identifier">b</span>)
-  <span class="ruby-identifier">push</span> = <span class="ruby-constant">Proc</span>.<span class="ruby-identifier">new</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">redis</span>, <span class="ruby-identifier">arg1</span>, <span class="ruby-identifier">arg2</span>, <span class="ruby-identifier">arg3</span><span class="ruby-operator">|</span>
-    <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">multi</span> <span class="ruby-keyword">do</span>
-      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-string">&quot;m:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">name</span>.<span class="ruby-identifier">to_s</span>
-      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">arg1</span>)
-      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">arg2</span>)
-      <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">rpush</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>, <span class="ruby-identifier">agis_aconv</span>(<span class="ruby-identifier">arg3</span>)
-    <span class="ruby-keyword">end</span>
-  <span class="ruby-keyword">end</span>
-  <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">name</span>] = [<span class="ruby-value">3</span>, <span class="ruby-identifier">push</span>, <span class="ruby-identifier">b</span>]
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 112</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_defm3</span>(<span class="ruby-identifier">name</span>, <span class="ruby-identifier">mode</span>=<span class="ruby-value">:retry</span>, <span class="ruby-identifier">timeout</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-operator">&amp;</span><span class="ruby-identifier">b</span>)
+  <span class="ruby-ivar">@agis_methods</span> <span class="ruby-operator">||=</span> <span class="ruby-constant">Hash</span>.<span class="ruby-identifier">new</span>
+  <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">name</span>] = {<span class="ruby-identifier">arity</span><span class="ruby-operator">:</span> <span class="ruby-value">3</span>, <span class="ruby-identifier">method</span><span class="ruby-operator">:</span> <span class="ruby-identifier">b</span>, <span class="ruby-identifier">mode</span><span class="ruby-operator">:</span> <span class="ruby-identifier">mode</span>, <span class="ruby-identifier">timeout</span><span class="ruby-operator">:</span> <span class="ruby-identifier">timeout</span>}
 <span class="ruby-keyword">end</span></pre>
           </div>
           
@@ -585,7 +755,7 @@ the queue</p>
 
           
           <div class="method-source-code" id="agis_fconv-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 50</span>
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 70</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_fconv</span>(<span class="ruby-identifier">v</span>)
   <span class="ruby-keyword">case</span> <span class="ruby-identifier">v</span>[<span class="ruby-value">0</span><span class="ruby-operator">..</span><span class="ruby-value">1</span>]
   <span class="ruby-keyword">when</span> <span class="ruby-string">&quot;s:&quot;</span>
@@ -618,10 +788,10 @@ the queue</p>
       </div>
 
     
-      <div id="method-i-agis_lcrunch" class="method-detail ">
+      <div id="method-i-agis_find_all_mailboxes" class="method-detail ">
         
         <div class="method-heading">
-          <span class="method-name">agis_lcrunch</span><span
+          <span class="method-name">agis_find_all_mailboxes</span><span
             class="method-args">(redis)</span>
           
           <span class="method-click-advice">click to toggle source</span>
@@ -631,20 +801,56 @@ the queue</p>
 
         <div class="method-description">
           
-          <p>Wait until the lock is available, crunch forever</p>
+          <p>Find all mailboxes for this class</p>
           
           
 
           
-          <div class="method-source-code" id="agis_lcrunch-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 174</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_lcrunch</span>(<span class="ruby-identifier">redis</span>)
-  <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">lock</span>(<span class="ruby-identifier">agis_mailbox</span> <span class="ruby-operator">+</span> <span class="ruby-string">&quot;.LOCK&quot;</span>, <span class="ruby-identifier">life</span><span class="ruby-operator">:</span> <span class="ruby-value">5</span>, <span class="ruby-identifier">acquire</span><span class="ruby-operator">:</span> <span class="ruby-value">10</span>) <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">lock</span><span class="ruby-operator">|</span>
-    <span class="ruby-identifier">loop</span> <span class="ruby-keyword">do</span>
-      <span class="ruby-identifier">_agis_crunch</span>(<span class="ruby-identifier">lock</span>, <span class="ruby-identifier">redis</span>)
-      <span class="ruby-identifier">lock</span>.<span class="ruby-identifier">extend_life</span>(<span class="ruby-value">5</span>)
-    <span class="ruby-keyword">end</span>
+          <div class="method-source-code" id="agis_find_all_mailboxes-source">
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 250</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_find_all_mailboxes</span>(<span class="ruby-identifier">redis</span>)
+  <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">smembers</span>(<span class="ruby-string">&quot;AGIS_MAILBOX_CLASS:&quot;</span> <span class="ruby-operator">+</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">to_s</span>)
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-agis_id_prelim" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">agis_id_prelim</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          
+          
+          
+
+          
+          <div class="method-source-code" id="agis_id_prelim-source">
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 23</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_id_prelim</span>
+  <span class="ruby-keyword">begin</span>
+    <span class="ruby-identifier">mid</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_id</span>
+  <span class="ruby-keyword">rescue</span> <span class="ruby-constant">NoMethodError</span>
   <span class="ruby-keyword">end</span>
+  <span class="ruby-keyword">begin</span>
+    <span class="ruby-identifier">mid</span> <span class="ruby-operator">||=</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">id</span>
+  <span class="ruby-keyword">rescue</span> <span class="ruby-constant">NoMethodError</span>
+  <span class="ruby-keyword">end</span>
+  <span class="ruby-keyword">return</span> <span class="ruby-identifier">mid</span>
 <span class="ruby-keyword">end</span></pre>
           </div>
           
@@ -676,9 +882,11 @@ in Redis the lock is this string followed by “.LOCK”</p>
 
           
           <div class="method-source-code" id="agis_mailbox-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 19</span>
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 37</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_mailbox</span>
-  <span class="ruby-string">&quot;AGIS TERMINAL : &quot;</span> <span class="ruby-operator">+</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">to_s</span> <span class="ruby-operator">+</span> <span class="ruby-string">&quot; : &quot;</span> <span class="ruby-operator">+</span> (<span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_id</span> <span class="ruby-keyword">or</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">id</span>.<span class="ruby-identifier">to_s</span>)
+  <span class="ruby-identifier">mid</span> = <span class="ruby-identifier">agis_id_prelim</span>
+  <span class="ruby-identifier">raise</span> <span class="ruby-constant">NoAgisIDAvailable</span> <span class="ruby-keyword">unless</span> <span class="ruby-identifier">mid</span>
+  <span class="ruby-identifier">a</span> = <span class="ruby-string">&quot;AGIS TERMINAL : &quot;</span> <span class="ruby-operator">+</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">to_s</span> <span class="ruby-operator">+</span> <span class="ruby-string">&quot; : &quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">mid</span>.<span class="ruby-identifier">to_s</span>
 <span class="ruby-keyword">end</span></pre>
           </div>
           
@@ -704,49 +912,16 @@ in Redis the lock is this string followed by “.LOCK”</p>
         <div class="method-description">
           
           <p>Get method in the format</p>
-<dl class="rdoc-list label-list"><dt>arity, pushing method, method body
+<dl class="rdoc-list label-list"><dt>arity, method body
 <dd></dd></dl>
           
           
 
           
           <div class="method-source-code" id="agis_method-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 185</span>
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 276</span>
 <span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_method</span>(<span class="ruby-identifier">name</span>)
   <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">name</span>]
-<span class="ruby-keyword">end</span></pre>
-          </div>
-          
-        </div>
-
-        
-
-        
-      </div>
-
-    
-      <div id="method-i-agis_push" class="method-detail ">
-        
-        <div class="method-heading">
-          <span class="method-name">agis_push</span><span
-            class="method-args">(redis, name, arg1=nil, arg2=nil, arg3=nil)</span>
-          
-          <span class="method-click-advice">click to toggle source</span>
-          
-        </div>
-        
-
-        <div class="method-description">
-          
-          <p>Push a method call into the queue</p>
-          
-          
-
-          
-          <div class="method-source-code" id="agis_push-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 190</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_push</span>(<span class="ruby-identifier">redis</span>, <span class="ruby-identifier">name</span>, <span class="ruby-identifier">arg1</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg2</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg3</span>=<span class="ruby-keyword">nil</span>)
-  <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">name</span>][<span class="ruby-value">1</span>].<span class="ruby-identifier">call</span>(<span class="ruby-identifier">redis</span>, <span class="ruby-identifier">arg1</span>, <span class="ruby-identifier">arg2</span>, <span class="ruby-identifier">arg3</span>)
 <span class="ruby-keyword">end</span></pre>
           </div>
           
@@ -762,7 +937,7 @@ in Redis the lock is this string followed by “.LOCK”</p>
         
         <div class="method-heading">
           <span class="method-name">agis_recall</span><span
-            class="method-args">(name, arg1=nil, arg2=nil, arg3=nil)</span>
+            class="method-args">(mn, arg1=nil, arg2=nil, arg3=nil)</span>
           
           <span class="method-click-advice">click to toggle source</span>
           
@@ -780,9 +955,178 @@ already guaranteed to be locked</p>
 
           
           <div class="method-source-code" id="agis_recall-source">
-            <pre><span class="ruby-comment"># File lib/agis.rb, line 209</span>
-<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_recall</span>(<span class="ruby-identifier">name</span>, <span class="ruby-identifier">arg1</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg2</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg3</span>=<span class="ruby-keyword">nil</span>)
-  <span class="ruby-identifier">met</span> = <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">name</span>][<span class="ruby-value">2</span>].<span class="ruby-identifier">call</span>(<span class="ruby-identifier">arg1</span>, <span class="ruby-identifier">arg2</span>, <span class="ruby-identifier">arg3</span>)
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 312</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_recall</span>(<span class="ruby-identifier">mn</span>, <span class="ruby-identifier">arg1</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg2</span>=<span class="ruby-keyword">nil</span>, <span class="ruby-identifier">arg3</span>=<span class="ruby-keyword">nil</span>)
+  <span class="ruby-identifier">meti</span> = <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">mn</span>.<span class="ruby-identifier">to_sym</span>][<span class="ruby-value">:method</span>]
+  <span class="ruby-keyword">case</span> <span class="ruby-identifier">meti</span>
+  <span class="ruby-keyword">when</span> <span class="ruby-constant">Proc</span>
+    <span class="ruby-identifier">met</span> = <span class="ruby-identifier">meti</span>
+  <span class="ruby-keyword">when</span> <span class="ruby-constant">Symbol</span>
+    <span class="ruby-identifier">met</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">method</span>(<span class="ruby-identifier">meti</span>)
+  <span class="ruby-keyword">when</span> <span class="ruby-constant">NilClass</span>
+    <span class="ruby-identifier">met</span> = <span class="ruby-keyword">self</span>.<span class="ruby-identifier">method</span>(<span class="ruby-identifier">mn</span>.<span class="ruby-identifier">to_sym</span>) <span class="ruby-comment"># when proc is Nil, call the class methods all the same</span>
+  <span class="ruby-keyword">end</span>
+  
+  <span class="ruby-keyword">case</span> <span class="ruby-ivar">@agis_methods</span>[<span class="ruby-identifier">mn</span>.<span class="ruby-identifier">to_sym</span>][<span class="ruby-value">:arity</span>]
+  <span class="ruby-keyword">when</span> <span class="ruby-value">0</span>
+    <span class="ruby-keyword">return</span> <span class="ruby-identifier">met</span>.<span class="ruby-identifier">call</span>()
+  <span class="ruby-keyword">when</span> <span class="ruby-value">1</span>
+    <span class="ruby-keyword">return</span> <span class="ruby-identifier">met</span>.<span class="ruby-identifier">call</span>(<span class="ruby-identifier">arg1</span>)
+  <span class="ruby-keyword">when</span> <span class="ruby-value">2</span>
+    <span class="ruby-keyword">return</span> <span class="ruby-identifier">met</span>.<span class="ruby-identifier">call</span>(<span class="ruby-identifier">arg1</span>, <span class="ruby-identifier">arg2</span>)
+  <span class="ruby-keyword">when</span> <span class="ruby-value">3</span>
+    <span class="ruby-keyword">return</span> <span class="ruby-identifier">met</span>.<span class="ruby-identifier">call</span>(<span class="ruby-identifier">arg1</span>, <span class="ruby-identifier">arg2</span>, <span class="ruby-identifier">arg3</span>)
+  <span class="ruby-keyword">end</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-agis_returnbox" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">agis_returnbox</span><span
+            class="method-args">()</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          
+          
+          
+
+          
+          <div class="method-source-code" id="agis_returnbox-source">
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 146</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_returnbox</span>
+  <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span> <span class="ruby-operator">+</span> <span class="ruby-string">&quot;.RETN&quot;</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-agis_try_usig" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">agis_try_usig</span><span
+            class="method-args">(redis, usig)</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          
+          
+          
+
+          
+          <div class="method-source-code" id="agis_try_usig-source">
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 220</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">agis_try_usig</span>(<span class="ruby-identifier">redis</span>, <span class="ruby-identifier">usig</span>)
+  <span class="ruby-identifier">mayb</span> = <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">hget</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_returnbox</span>, <span class="ruby-identifier">usig</span>
+  <span class="ruby-keyword">if</span> <span class="ruby-identifier">mayb</span>
+    <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">hdel</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_returnbox</span>, <span class="ruby-identifier">usig</span>
+    <span class="ruby-keyword">return</span> <span class="ruby-identifier">mayb</span>
+  <span class="ruby-keyword">else</span>
+    <span class="ruby-keyword">return</span> <span class="ruby-keyword">nil</span>
+  <span class="ruby-keyword">end</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-popfive" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">popfive</span><span
+            class="method-args">(redis)</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          
+          
+          
+
+          
+          <div class="method-source-code" id="popfive-source">
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 132</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">popfive</span>(<span class="ruby-identifier">redis</span>)
+  <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">multi</span> <span class="ruby-keyword">do</span>
+    <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">lpop</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>
+    <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">lpop</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>
+    <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">lpop</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>
+    <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">lpop</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>
+    <span class="ruby-identifier">redis</span>.<span class="ruby-identifier">lpop</span> <span class="ruby-keyword">self</span>.<span class="ruby-identifier">agis_mailbox</span>
+  <span class="ruby-keyword">end</span>
+<span class="ruby-keyword">end</span></pre>
+          </div>
+          
+        </div>
+
+        
+
+        
+      </div>
+
+    
+      <div id="method-i-pretty_exception" class="method-detail ">
+        
+        <div class="method-heading">
+          <span class="method-name">pretty_exception</span><span
+            class="method-args">(args, e)</span>
+          
+          <span class="method-click-advice">click to toggle source</span>
+          
+        </div>
+        
+
+        <div class="method-description">
+          
+          
+          
+          
+
+          
+          <div class="method-source-code" id="pretty_exception-source">
+            <pre><span class="ruby-comment"># File lib/agis.rb, line 122</span>
+<span class="ruby-keyword">def</span> <span class="ruby-identifier">pretty_exception</span>(<span class="ruby-identifier">args</span>, <span class="ruby-identifier">e</span>)
+  <span class="ruby-identifier">ret</span> = []
+  <span class="ruby-identifier">ret</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;Agis method call failed: &quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">args</span>.<span class="ruby-identifier">to_s</span>
+  <span class="ruby-identifier">ret</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-string">&quot;  &quot;</span> <span class="ruby-operator">+</span> <span class="ruby-identifier">e</span>.<span class="ruby-identifier">class</span>.<span class="ruby-identifier">to_s</span>
+  <span class="ruby-identifier">e</span>.<span class="ruby-identifier">backtrace</span>.<span class="ruby-identifier">each</span> <span class="ruby-keyword">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">v</span><span class="ruby-operator">|</span>
+    <span class="ruby-identifier">ret</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-identifier">v</span>.<span class="ruby-identifier">to_s</span>
+  <span class="ruby-keyword">end</span>
+  <span class="ruby-identifier">ret</span>
 <span class="ruby-keyword">end</span></pre>
           </div>
           

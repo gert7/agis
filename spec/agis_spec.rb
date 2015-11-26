@@ -260,25 +260,25 @@ describe Agis do
       shared_trier = Trier.new
       
       t1 = Thread.new {
-        22222.times do
+        11111.times do
           a = shared_trier.agis_call($redis, :upcount).to_s
           #puts "Thread 1 Trier counter: " + a
         end
       }
       t2 = Thread.new {
-        22222.times do
+        11111.times do
           a = shared_trier.agis_call($redis, :upcount).to_s
           #puts "Thread 2 Trier counter: " + a
         end
       }
       t3 = Thread.new {
-        22222.times do
+        11111.times do
           a = shared_trier.agis_call($redis, :upcount).to_s
           #puts "Thread 3 Trier counter: " + a
         end
       }
       t4 = Thread.new {
-        22222.times do
+        11111.times do
           a = shared_trier.agis_call($redis, :upcount).to_s
           #puts "Thread 4 Trier counter: " + a
         end
@@ -287,8 +287,8 @@ describe Agis do
       t2.join
       t3.join
       t4.join
-      puts "Final result: " + shared_trier.count.to_s + " out of 88888"
-      expect(shared_trier.agis_call($redis, :upcount) >= 88889).to eq true
+      puts "Final result: " + shared_trier.count.to_s + " out of 44444"
+      expect(shared_trier.agis_call($redis, :upcount) >= 44445).to eq true
     end
     
     it "allows an actor to call another actor" do
@@ -341,6 +341,53 @@ describe Agis do
   describe "#agis_recall" do
     it "retries a method call" do
       expect(Guffin.new.agis_call($redis, :redo, 0)).to eq "A SUCCESS"
+    end
+  end
+  
+  describe "#agis_crunch_all_records" do
+    class Pellet
+      include Agis
+      attr_accessor :id
+      
+      def self.find(id)
+        return Pellet.new(id: id)
+      end
+      
+      def aemote
+        raise StandardError if $pelletmustfail
+        $redis.set("emote " + self.id.to_s, 100)
+      end
+      
+      def emote
+        self.acall($redis, :aemote)
+      end
+      
+      def value
+        $redis.get("emote " + self.id.to_s).to_i
+      end
+      
+      def initialize(hash)
+        self.id = hash[:id]
+        agis_defm0 :aemote
+      end
+    end
+    
+    it "crunches all calls of this class" do
+      pellet1 = Pellet.new(id: 1)
+      pellet2 = Pellet.new(id: 2)
+      $pelletmustfail = true
+      begin
+        pellet1.emote
+      rescue => e
+      end
+      begin
+        pellet2.emote
+      rescue => e
+      end
+      $pelletmustfail = false
+      pellet1.agis_crunch_all_records($redis)
+      expect(pellet1.value).to eq 100
+      expect(pellet2.value).to eq 100
     end
   end
 end

@@ -19,10 +19,8 @@ module Agis
   
   class MessageBoxEmpty < StandardError
   end
-
-  # the name of the key used for the Agis message box in Redis
-  # the lock is this string followed by ".LOCK"
-  def agis_mailbox
+  
+  def agis_id_prelim
     begin
       mid = self.agis_id
     rescue NoMethodError
@@ -31,6 +29,13 @@ module Agis
       mid ||= self.id
     rescue NoMethodError
     end
+    return mid
+  end
+
+  # the name of the key used for the Agis message box in Redis
+  # the lock is this string followed by ".LOCK"
+  def agis_mailbox
+    mid = agis_id_prelim
     raise NoAgisIDAvailable unless mid
     a = "AGIS TERMINAL : " + self.class.to_s + " : " + mid.to_s
   end
@@ -236,6 +241,36 @@ module Agis
     end
   end
   
+  # Find all mailboxes total
+  def _agis_find_global_mailboxes(redis)
+    redis.smembers("AGIS_MAILBOX_GLOBAL_LIST")
+  end
+  
+  # Find all mailboxes for this class
+  def agis_find_all_mailboxes(redis)
+    redis.smembers("AGIS_MAILBOX_CLASS:" + self.class.to_s)
+  end
+  
+  # Crunch all agis calls on a single model
+  # found using the #find method with the
+  # agis_id or id. Must be numeric
+  def agis_crunch_all_records(redis)
+    all = agis_find_all_mailboxes(redis)
+    all.each do |id|
+      self.class.find(id).agis_call(redis)
+    end
+  end
+  
+  # Crunch all agis calls on a single model
+  # found using the #new method with id set
+  # to agis_id or id
+  def agis_crunch_all_records_new(redis)
+    all = agis_find_all_mailboxes(redis)
+    all.each do |id|
+      self.class.new(id).agis_call(redis)
+    end
+  end
+  
   # Get method in the format
   # [arity, method body]
   def agis_method(name)
@@ -249,6 +284,9 @@ module Agis
     until_sig = Time.now.to_s + ":" + Process.pid.to_s + Random.new.rand(4000000000).to_s + Random.new.rand(4000000000).to_s
     loop do
       begin
+        redis.sadd("AGIS_MAILBOX_CLASSES", self.class.to_s)
+        redis.sadd("AGIS_MAILBOX_CLASS:" + self.class.to_s, self.agis_id_prelim)
+        redis.sadd("AGIS_MAILBOX_GLOBAL_LIST", self.agis_mailbox)
         redis.multi do
           redis.rpush self.agis_mailbox, "m:" + name.to_s
           redis.rpush self.agis_mailbox, agis_aconv(arg1)

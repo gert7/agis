@@ -39,3 +39,6 @@
 - Adds all mailboxes to global list
 - Added agis_crunch_all_records for global behavior
 
+0.3.1
+
+- Automatically remove from global list

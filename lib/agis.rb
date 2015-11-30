@@ -167,7 +167,7 @@ module Agis
       else
         mc        = @agis_methods[mns][:arity]
         mrm       = @agis_methods[mns][:mode]
-        meti    = @agis_methods[mns][:method]
+        meti      = @agis_methods[mns][:method]
         case meti
         when Proc
           met = meti
@@ -227,6 +227,16 @@ module Agis
     end
   end
   
+  def _agis_cleanup_when_empty(redis)
+    redis.del(self.agis_mailbox)
+    redis.srem("AGIS_MAILBOX_GLOBAL_LIST", self.agis_mailbox)
+    redis.srem("AGIS_MAILBOX_CLASS:" + self.class.to_s, self.agis_id_prelim)
+    if(redis.scard("AGIS_MAILBOX_CLASS:" + self.class.to_s) == 0)
+      redis.del("AGIS_MAILBOX_CLASS:" + self.class.to_s)
+      redis.srem("AGIS_MAILBOX_CLASSES", self.class.to_s)
+    end
+  end
+
   def _agis_crunch(redis, usig)
     loop do
       redis.lock(self.agis_boxlock, life: 10) do |lock|
@@ -234,6 +244,7 @@ module Agis
         next if lock.stale_key?
         u = agis_try_usig(redis, usig)
         if a == :empty
+          _agis_cleanup_when_empty(redis)
           raise Agis::MessageBoxEmpty unless u
         end
         return agis_fconv(u) if u
